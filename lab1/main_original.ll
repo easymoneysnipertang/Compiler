@@ -2,16 +2,20 @@
 source_filename = "main.c"
 target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-f80:128-n8:16:32:64-S128"
 target triple = "x86_64-pc-linux-gnu"
+; 描述文件信息、数据布局、目标架构
 
+; I/O输出时的字符串常量，避免重复定义
 @.str = private unnamed_addr constant [3 x i8] c"%d\00", align 1
 @.str.1 = private unnamed_addr constant [4 x i8] c"%d\0A\00", align 1
 
 ; Function Attrs: noinline nounwind optnone uwtable
 define dso_local i32 @main() #0 {
   %1 = alloca i32, align 4
+  ; 临时寄存器保存i,n,f
   %2 = alloca i32, align 4
   %3 = alloca i32, align 4
   %4 = alloca i32, align 4
+  ; 赋值
   store i32 0, i32* %1, align 4
   %5 = call i32 (i8*, ...) @__isoc99_scanf(i8* noundef getelementptr inbounds ([3 x i8], [3 x i8]* @.str, i64 0, i64 0), i32* noundef %3)
   store i32 2, i32* %2, align 4
@@ -25,6 +29,7 @@ define dso_local i32 @main() #0 {
   br i1 %9, label %10, label %16
 
 10:                                               ; preds = %6
+  ; i<=n执行10
   %11 = load i32, i32* %4, align 4
   %12 = load i32, i32* %2, align 4
   %13 = mul nsw i32 %11, %12
@@ -32,22 +37,28 @@ define dso_local i32 @main() #0 {
   %14 = load i32, i32* %2, align 4
   %15 = add nsw i32 %14, 1
   store i32 %15, i32* %2, align 4
+  ; 跳转回循环初始位置
   br label %6, !llvm.loop !6
 
 16:                                               ; preds = %6
+  ; 打印f
   %17 = load i32, i32* %4, align 4
   %18 = call i32 (i8*, ...) @printf(i8* noundef getelementptr inbounds ([4 x i8], [4 x i8]* @.str.1, i64 0, i64 0), i32 noundef %17)
+  ; return 0
   %19 = load i32, i32* %1, align 4
   ret i32 %19
 }
 
+; 函数声明
 declare i32 @__isoc99_scanf(i8* noundef, ...) #1
 
 declare i32 @printf(i8* noundef, ...) #1
 
+; #0和#1代表函数的属性集，控制编译行为
 attributes #0 = { noinline nounwind optnone uwtable "frame-pointer"="all" "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 attributes #1 = { "frame-pointer"="all" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 
+; 元数据和标识信息
 !llvm.module.flags = !{!0, !1, !2, !3, !4}
 !llvm.ident = !{!5}
 
