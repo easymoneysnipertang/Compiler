@@ -1,0 +1,40 @@
+int 'int'	 [StartOfLine]	Loc=<main_error.c:2:1>
+identifier 'main'	 [LeadingSpace]	Loc=<main_error.c:2:5>
+l_paren '('		Loc=<main_error.c:2:9>
+r_paren ')'		Loc=<main_error.c:2:10>
+l_brace '{'		Loc=<main_error.c:2:11>
+int 'int'	 [StartOfLine] [LeadingSpace]	Loc=<main_error.c:3:5>
+identifier 'i'	 [LeadingSpace]	Loc=<main_error.c:3:9>
+comma ','		Loc=<main_error.c:3:10>
+identifier 'n'		Loc=<main_error.c:3:11>
+comma ','		Loc=<main_error.c:3:12>
+identifier 'f'		Loc=<main_error.c:3:13>
+semi ';'		Loc=<main_error.c:3:14>
+identifier 'i'	 [StartOfLine] [LeadingSpace]	Loc=<main_error.c:5:5>
+equal '='		Loc=<main_error.c:5:6>
+numeric_constant '2'		Loc=<main_error.c:5:7>
+semi ';'		Loc=<main_error.c:5:8>
+identifier 'f'	 [StartOfLine] [LeadingSpace]	Loc=<main_error.c:6:5>
+equal '='		Loc=<main_error.c:6:6>
+numeric_constant '1'		Loc=<main_error.c:6:7>
+semi ';'		Loc=<main_error.c:6:8>
+while 'while'	 [StartOfLine] [LeadingSpace]	Loc=<main_error.c:7:5>
+l_paren '('		Loc=<main_error.c:7:10>
+identifier 'i'		Loc=<main_error.c:7:11>
+lessequal '<='		Loc=<main_error.c:7:12>
+identifier 'n'		Loc=<main_error.c:7:14>
+r_paren ')'		Loc=<main_error.c:7:15>
+l_brace '{'		Loc=<main_error.c:7:16>
+identifier 'f'	 [StartOfLine] [LeadingSpace]	Loc=<main_error.c:8:9>
+equal '='		Loc=<main_error.c:8:10>
+identifier 'f'		Loc=<main_error.c:8:11>
+star '*'		Loc=<main_error.c:8:12>
+identifier 'i'		Loc=<main_error.c:8:13>
+semi ';'		Loc=<main_error.c:8:14>
+identifier 'i'	 [StartOfLine] [LeadingSpace]	Loc=<main_error.c:10:9>
+equal '='		Loc=<main_error.c:10:10>
+identifier 'i'		Loc=<main_error.c:10:11>
+plus '+'		Loc=<main_error.c:10:12>
+numeric_constant '1'		Loc=<main_error.c:10:13>
+r_brace '}'	 [StartOfLine]	Loc=<main_error.c:11:1>
+eof ''		Loc=<main_error.c:11:2>
