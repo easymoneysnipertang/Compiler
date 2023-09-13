@@ -1,0 +1,27 @@
+
+;; Function main (null)
+;; enabled by -tree-original
+
+
+{
+  int i;
+  int n;
+  int f;
+
+    int i;
+    int n;
+    int f;
+  scanf ((const char * restrict) "%d", &n);
+  i = 2;
+  f = 1;
+  goto <D.2350>;
+  <D.2351>:;
+  f = f * i;
+  i = i + 1;
+  <D.2350>:;
+  if (i <= n) goto <D.2351>; else goto <D.2349>;
+  <D.2349>:;
+  printf ((const char * restrict) "%d\n", f);
+}
+return 0;
+
