@@ -1,0 +1,1 @@
+awk -f pre.awk a-main.c.* | awk -f treeviz.awk > tree.dot
