@@ -1,0 +1,153 @@
+
+;; Function main (null)
+;; enabled by -tree-original
+
+@1      statement_list   0   : @2       1   : @3      
+@2      bind_expr        type: @4       vars: @5       body: @6      
+@3      return_expr      type: @4       expr: @7      
+@4      void_type        name: @8       algn: 8       
+@5      var_decl         name: @9       type: @10      scpe: @11     
+                         srcp: main.c:3                size: @12     
+                         algn: 32       used: 1       
+@6      statement_list   0   : @13      1   : @14      2   : @15     
+                         3   : @16      4   : @17      5   : @18     
+                         6   : @19      7   : @20     
+@7      modify_expr      type: @10      op 0: @21      op 1: @22     
+@8      type_decl        name: @23      type: @4      
+@9      identifier_node  strg: i        lngt: 1       
+@10     integer_type     name: @24      size: @12      algn: 32      
+                         prec: 32       sign: signed   min : @25     
+                         max : @26     
+@11     function_decl    name: @27      type: @28      srcp: main.c:2      
+                         link: extern  
+@12     integer_cst      type: @29     int: 32
+@13     decl_expr        type: @4      
+@14     decl_expr        type: @4      
+@15     decl_expr        type: @4      
+@16     call_expr        type: @10      fn  : @30      0   : @31     
+                         1   : @32     
+@17     modify_expr      type: @10      op 0: @5       op 1: @33     
+@18     modify_expr      type: @10      op 0: @34      op 1: @35     
+@19     statement_list   0   : @36      1   : @37      2   : @38     
+                         3   : @39      4   : @40      5   : @41     
+                         6   : @42     
+@20     call_expr        type: @10      fn  : @43      0   : @44     
+                         1   : @34     
+@21     result_decl      type: @10      scpe: @11      srcp: main.c:2      
+                         note: artificial              size: @12     
+                         algn: 32      
+@22     integer_cst      type: @10     int: 0
+@23     identifier_node  strg: void     lngt: 4       
+@24     type_decl        name: @45      type: @10     
+@25     integer_cst      type: @10     int: -2147483648
+@26     integer_cst      type: @10     int: 2147483647
+@27     identifier_node  strg: main     lngt: 4       
+@28     function_type    unql: @46      size: @47      algn: 8       
+                         retn: @10     
+@29     integer_type     name: @48      size: @49      algn: 128     
+                         prec: 128      sign: unsigned min : @50     
+                         max : @51     
+@30     addr_expr        type: @52      op 0: @53     
+@31     nop_expr         type: @54      op 0: @55     
+@32     addr_expr        type: @56      op 0: @57     
+@33     integer_cst      type: @10     int: 2
+@34     var_decl         name: @58      type: @10      scpe: @11     
+                         srcp: main.c:3                size: @12     
+                         algn: 32       used: 1       
+@35     integer_cst      type: @10     int: 1
+@36     goto_expr        type: @4       labl: @59     
+@37     label_expr       type: @4       name: @60     
+@38     modify_expr      type: @10      op 0: @34      op 1: @61     
+@39     modify_expr      type: @10      op 0: @5       op 1: @62     
+@40     label_expr       type: @4       name: @59     
+@41     cond_expr        type: @4       op 0: @63      op 1: @64     
+                         op 2: @65     
+@42     label_expr       type: @4       name: @66     
+@43     addr_expr        type: @67      op 0: @68     
+@44     nop_expr         type: @54      op 0: @69     
+@45     identifier_node  strg: int      lngt: 3       
+@46     function_type    size: @47      algn: 8        retn: @10     
+@47     integer_cst      type: @29     int: 8
+@48     identifier_node  strg: bitsizetype             lngt: 11      
+@49     integer_cst      type: @29     int: 128
+@50     integer_cst      type: @29     int: 0
+@51     integer_cst      type: @29     int: -1
+@52     pointer_type     size: @70      algn: 64       ptd : @71     
+@53     function_decl    name: @72      mngl: @73      type: @71     
+                         srcp: stdio.h:437             args: @74     
+                         body: undefined               link: extern  
+@54     pointer_type     qual:   r      unql: @75      size: @70     
+                         algn: 64       ptd : @76     
+@55     addr_expr        type: @77      op 0: @78     
+@56     pointer_type     size: @70      algn: 64       ptd : @10     
+@57     var_decl         name: @79      type: @10      scpe: @11     
+                         srcp: main.c:3                size: @12     
+                         algn: 32       used: 1       
+@58     identifier_node  strg: f        lngt: 1       
+@59     label_decl       type: @4       scpe: @11      srcp: main.c:7      
+                         note: artificial 
+@60     label_decl       type: @4       scpe: @11      srcp: main.c:7      
+                         note: artificial 
+@61     mult_expr        type: @10      op 0: @34      op 1: @5      
+@62     plus_expr        type: @10      op 0: @5       op 1: @35     
+@63     le_expr          type: @10      op 0: @5       op 1: @57     
+@64     goto_expr        type: @4       labl: @60     
+@65     goto_expr        type: @4       labl: @66     
+@66     label_decl       type: @4       scpe: @11      srcp: main.c:7      
+                         note: artificial 
+@67     pointer_type     size: @70      algn: 64       ptd : @80     
+@68     function_decl    name: @81      type: @80      srcp: stdio.h:356    
+                         args: @82      body: undefined 
+                         link: extern  
+@69     addr_expr        type: @83      op 0: @84     
+@70     integer_cst      type: @29     int: 64
+@71     function_type    size: @47      algn: 8        retn: @10     
+                         prms: @85     
+@72     identifier_node  strg: scanf    lngt: 5       
+@73     identifier_node  strg: *__isoc99_scanf         lngt: 15      
+@74     parm_decl        name: @86      type: @54      srcp: stdio.h:421    
+                         argt: @54      size: @70      algn: 64      
+                         used: 0       
+@75     pointer_type     size: @70      algn: 64       ptd : @76     
+@76     integer_type     qual: c        name: @87      unql: @88     
+                         size: @47      algn: 8        prec: 8       
+                         sign: signed   min : @89      max : @90     
+@77     pointer_type     size: @70      algn: 64       ptd : @91     
+@78     string_cst       type: @91     strg: %d       lngt: 3       
+@79     identifier_node  strg: n        lngt: 1       
+@80     function_type    size: @47      algn: 8        retn: @10     
+                         prms: @85     
+@81     identifier_node  strg: printf   lngt: 6       
+@82     parm_decl        name: @86      type: @54      srcp: stdio.h:356    
+                         argt: @54      size: @70      algn: 64      
+                         used: 0       
+@83     pointer_type     size: @70      algn: 64       ptd : @92     
+@84     string_cst       type: @92     strg: %d
+      lngt: 4       
+@85     tree_list        valu: @54     
+@86     identifier_node  strg: __format lngt: 8       
+@87     type_decl        name: @93      type: @88     
+@88     integer_type     name: @87      size: @47      algn: 8       
+                         prec: 8        sign: signed   min : @89     
+                         max : @90     
+@89     integer_cst      type: @88     int: -128
+@90     integer_cst      type: @88     int: 127
+@91     array_type       size: @94      algn: 8        elts: @88     
+                         domn: @95     
+@92     array_type       size: @12      algn: 8        elts: @88     
+                         domn: @96     
+@93     identifier_node  strg: char     lngt: 4       
+@94     integer_cst      type: @29     int: 24
+@95     integer_type     size: @70      algn: 64       prec: 64      
+                         sign: signed   min : @97      max : @98     
+@96     integer_type     size: @70      algn: 64       prec: 64      
+                         sign: signed   min : @97      max : @99     
+@97     integer_cst      type: @100    int: 0
+@98     integer_cst      type: @100    int: 2
+@99     integer_cst      type: @100    int: 3
+@100    integer_type     name: @101     size: @70      algn: 64      
+                         prec: 64       sign: unsigned min : @97     
+                         max : @102    
+@101    identifier_node  strg: sizetype lngt: 8       
+@102    integer_cst      type: @100    int: -1
+
