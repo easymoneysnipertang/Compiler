@@ -1,0 +1,227 @@
+Running pass: VerifierPass on [module]
+Running analysis: VerifierAnalysis on [module]
+Running pass: Annotation2MetadataPass on [module]
+Running pass: ForceFunctionAttrsPass on [module]
+Running pass: InferFunctionAttrsPass on [module]
+Running analysis: InnerAnalysisManagerProxy<llvm::FunctionAnalysisManager, llvm::Module> on [module]
+Running analysis: TargetLibraryAnalysis on __isoc99_scanf
+Running analysis: TargetLibraryAnalysis on printf
+Invalidating analysis: VerifierAnalysis on [module]
+Invalidating analysis: InnerAnalysisManagerProxy<llvm::FunctionAnalysisManager, llvm::Module> on [module]
+Running analysis: InnerAnalysisManagerProxy<llvm::FunctionAnalysisManager, llvm::Module> on [module]
+Skipping pass LowerExpectIntrinsicPass on main due to optnone attribute
+Skipping pass: LowerExpectIntrinsicPass on main
+Skipping pass SimplifyCFGPass on main due to optnone attribute
+Skipping pass: SimplifyCFGPass on main
+Skipping pass SROAPass on main due to optnone attribute
+Skipping pass: SROAPass on main
+Skipping pass EarlyCSEPass on main due to optnone attribute
+Skipping pass: EarlyCSEPass on main
+Running pass: CoroEarlyPass on main
+Running pass: OpenMPOptPass on [module]
+Running pass: IPSCCPPass on [module]
+Running analysis: DominatorTreeAnalysis on main
+Running analysis: AssumptionAnalysis on main
+Running analysis: TargetIRAnalysis on main
+Running pass: CalledValuePropagationPass on [module]
+Running pass: GlobalOptPass on [module]
+Running analysis: TargetLibraryAnalysis on main
+Invalidating analysis: InnerAnalysisManagerProxy<llvm::FunctionAnalysisManager, llvm::Module> on [module]
+Running analysis: InnerAnalysisManagerProxy<llvm::FunctionAnalysisManager, llvm::Module> on [module]
+Skipping pass PromotePass on main due to optnone attribute
+Skipping pass: PromotePass on main
+Running pass: DeadArgumentEliminationPass on [module]
+Skipping pass InstCombinePass on main due to optnone attribute
+Skipping pass: InstCombinePass on main
+Skipping pass SimplifyCFGPass on main due to optnone attribute
+Skipping pass: SimplifyCFGPass on main
+Running pass: ModuleInlinerWrapperPass on [module]
+Running analysis: InlineAdvisorAnalysis on [module]
+Running pass: RequireAnalysisPass<llvm::GlobalsAA, llvm::Module> on [module]
+Running analysis: GlobalsAA on [module]
+Running analysis: CallGraphAnalysis on [module]
+Running analysis: TargetLibraryAnalysis on main
+Skipping pass InvalidateAnalysisPass<llvm::AAManager> on main due to optnone attribute
+Skipping pass: InvalidateAnalysisPass<llvm::AAManager> on main
+Running pass: RequireAnalysisPass<llvm::ProfileSummaryAnalysis, llvm::Module> on [module]
+Running analysis: ProfileSummaryAnalysis on [module]
+Running analysis: InnerAnalysisManagerProxy<llvm::CGSCCAnalysisManager, llvm::Module> on [module]
+Running analysis: LazyCallGraphAnalysis on [module]
+Running analysis: FunctionAnalysisManagerCGSCCProxy on (main)
+Running analysis: OuterAnalysisManagerProxy<llvm::ModuleAnalysisManager, LazyCallGraph::SCC, llvm::LazyCallGraph &> on (main)
+Running pass: DevirtSCCRepeatedPass on (main)
+Running pass: InlinerPass on (main)
+Running analysis: OptimizationRemarkEmitterAnalysis on main
+Running pass: InlinerPass on (main)
+Running pass: PostOrderFunctionAttrsPass on (main)
+Skipping pass SROAPass on main due to optnone attribute
+Skipping pass: SROAPass on main
+Skipping pass EarlyCSEPass on main due to optnone attribute
+Skipping pass: EarlyCSEPass on main
+Skipping pass SimplifyCFGPass on main due to optnone attribute
+Skipping pass: SimplifyCFGPass on main
+Skipping pass InstCombinePass on main due to optnone attribute
+Skipping pass: InstCombinePass on main
+Skipping pass LibCallsShrinkWrapPass on main due to optnone attribute
+Skipping pass: LibCallsShrinkWrapPass on main
+Skipping pass SimplifyCFGPass on main due to optnone attribute
+Skipping pass: SimplifyCFGPass on main
+Skipping pass ReassociatePass on main due to optnone attribute
+Skipping pass: ReassociatePass on main
+Running pass: RequireAnalysisPass<llvm::OptimizationRemarkEmitterAnalysis, llvm::Function> on main
+Skipping pass LoopSimplifyPass on main due to optnone attribute
+Skipping pass: LoopSimplifyPass on main
+Skipping pass LCSSAPass on main due to optnone attribute
+Skipping pass: LCSSAPass on main
+Running analysis: LoopAnalysis on main
+Running analysis: DominatorTreeAnalysis on main
+Running analysis: MemorySSAAnalysis on main
+Running analysis: AAManager on main
+Running analysis: BasicAA on main
+Running analysis: AssumptionAnalysis on main
+Running analysis: TargetIRAnalysis on main
+Running analysis: ScopedNoAliasAA on main
+Running analysis: TypeBasedAA on main
+Running analysis: OuterAnalysisManagerProxy<llvm::ModuleAnalysisManager, llvm::Function> on main
+Running analysis: ScalarEvolutionAnalysis on main
+Running analysis: InnerAnalysisManagerProxy<llvm::LoopAnalysisManager, llvm::Function> on main
+Skipping pass LoopInstSimplifyPass on main due to optnone attribute
+Skipping pass: LoopInstSimplifyPass on Loop at depth 1 containing: %6<header><exiting>,%10<latch>
+Skipping pass LoopSimplifyCFGPass on main due to optnone attribute
+Skipping pass: LoopSimplifyCFGPass on Loop at depth 1 containing: %6<header><exiting>,%10<latch>
+Skipping pass LICMPass on main due to optnone attribute
+Skipping pass: LICMPass on Loop at depth 1 containing: %6<header><exiting>,%10<latch>
+Skipping pass LoopRotatePass on main due to optnone attribute
+Skipping pass: LoopRotatePass on Loop at depth 1 containing: %6<header><exiting>,%10<latch>
+Skipping pass LICMPass on main due to optnone attribute
+Skipping pass: LICMPass on Loop at depth 1 containing: %6<header><exiting>,%10<latch>
+Skipping pass SimpleLoopUnswitchPass on main due to optnone attribute
+Skipping pass: SimpleLoopUnswitchPass on Loop at depth 1 containing: %6<header><exiting>,%10<latch>
+Skipping pass SimplifyCFGPass on main due to optnone attribute
+Skipping pass: SimplifyCFGPass on main
+Skipping pass InstCombinePass on main due to optnone attribute
+Skipping pass: InstCombinePass on main
+Skipping pass LoopSimplifyPass on main due to optnone attribute
+Skipping pass: LoopSimplifyPass on main
+Skipping pass LCSSAPass on main due to optnone attribute
+Skipping pass: LCSSAPass on main
+Skipping pass LoopIdiomRecognizePass on main due to optnone attribute
+Skipping pass: LoopIdiomRecognizePass on Loop at depth 1 containing: %6<header><exiting>,%10<latch>
+Skipping pass IndVarSimplifyPass on main due to optnone attribute
+Skipping pass: IndVarSimplifyPass on Loop at depth 1 containing: %6<header><exiting>,%10<latch>
+Skipping pass LoopDeletionPass on main due to optnone attribute
+Skipping pass: LoopDeletionPass on Loop at depth 1 containing: %6<header><exiting>,%10<latch>
+Skipping pass LoopFullUnrollPass on main due to optnone attribute
+Skipping pass: LoopFullUnrollPass on Loop at depth 1 containing: %6<header><exiting>,%10<latch>
+Skipping pass SROAPass on main due to optnone attribute
+Skipping pass: SROAPass on main
+Skipping pass MemCpyOptPass on main due to optnone attribute
+Skipping pass: MemCpyOptPass on main
+Skipping pass SCCPPass on main due to optnone attribute
+Skipping pass: SCCPPass on main
+Skipping pass BDCEPass on main due to optnone attribute
+Skipping pass: BDCEPass on main
+Skipping pass InstCombinePass on main due to optnone attribute
+Skipping pass: InstCombinePass on main
+Running pass: CoroElidePass on main
+Skipping pass ADCEPass on main due to optnone attribute
+Skipping pass: ADCEPass on main
+Skipping pass SimplifyCFGPass on main due to optnone attribute
+Skipping pass: SimplifyCFGPass on main
+Skipping pass InstCombinePass on main due to optnone attribute
+Skipping pass: InstCombinePass on main
+Clearing all analysis results for: <possibly invalidated loop>
+Invalidating analysis: DominatorTreeAnalysis on main
+Invalidating analysis: LoopAnalysis on main
+Invalidating analysis: BasicAA on main
+Invalidating analysis: AAManager on main
+Invalidating analysis: MemorySSAAnalysis on main
+Invalidating analysis: ScalarEvolutionAnalysis on main
+Invalidating analysis: InnerAnalysisManagerProxy<llvm::LoopAnalysisManager, llvm::Function> on main
+Running pass: CoroSplitPass on (main)
+Invalidating analysis: InlineAdvisorAnalysis on [module]
+Running pass: GlobalOptPass on [module]
+Running pass: GlobalDCEPass on [module]
+Running pass: EliminateAvailableExternallyPass on [module]
+Running pass: ReversePostOrderFunctionAttrsPass on [module]
+Running pass: RequireAnalysisPass<llvm::GlobalsAA, llvm::Module> on [module]
+Skipping pass Float2IntPass on main due to optnone attribute
+Skipping pass: Float2IntPass on main
+Skipping pass LowerConstantIntrinsicsPass on main due to optnone attribute
+Skipping pass: LowerConstantIntrinsicsPass on main
+Skipping pass LoopSimplifyPass on main due to optnone attribute
+Skipping pass: LoopSimplifyPass on main
+Skipping pass LCSSAPass on main due to optnone attribute
+Skipping pass: LCSSAPass on main
+Running analysis: LoopAnalysis on main
+Running analysis: DominatorTreeAnalysis on main
+Running analysis: AAManager on main
+Running analysis: BasicAA on main
+Running analysis: ScalarEvolutionAnalysis on main
+Running analysis: InnerAnalysisManagerProxy<llvm::LoopAnalysisManager, llvm::Function> on main
+Skipping pass LoopRotatePass on main due to optnone attribute
+Skipping pass: LoopRotatePass on Loop at depth 1 containing: %6<header><exiting>,%10<latch>
+Skipping pass LoopDeletionPass on main due to optnone attribute
+Skipping pass: LoopDeletionPass on Loop at depth 1 containing: %6<header><exiting>,%10<latch>
+Skipping pass LoopDistributePass on main due to optnone attribute
+Skipping pass: LoopDistributePass on main
+Skipping pass InjectTLIMappings on main due to optnone attribute
+Skipping pass: InjectTLIMappings on main
+Skipping pass LoopVectorizePass on main due to optnone attribute
+Skipping pass: LoopVectorizePass on main
+Skipping pass LoopLoadEliminationPass on main due to optnone attribute
+Skipping pass: LoopLoadEliminationPass on main
+Skipping pass InstCombinePass on main due to optnone attribute
+Skipping pass: InstCombinePass on main
+Skipping pass SimplifyCFGPass on main due to optnone attribute
+Skipping pass: SimplifyCFGPass on main
+Skipping pass VectorCombinePass on main due to optnone attribute
+Skipping pass: VectorCombinePass on main
+Skipping pass InstCombinePass on main due to optnone attribute
+Skipping pass: InstCombinePass on main
+Skipping pass LoopUnrollPass on main due to optnone attribute
+Skipping pass: LoopUnrollPass on main
+Skipping pass WarnMissedTransformationsPass on main due to optnone attribute
+Skipping pass: WarnMissedTransformationsPass on main
+Skipping pass InstCombinePass on main due to optnone attribute
+Skipping pass: InstCombinePass on main
+Running pass: RequireAnalysisPass<llvm::OptimizationRemarkEmitterAnalysis, llvm::Function> on main
+Skipping pass LoopSimplifyPass on main due to optnone attribute
+Skipping pass: LoopSimplifyPass on main
+Skipping pass LCSSAPass on main due to optnone attribute
+Skipping pass: LCSSAPass on main
+Running analysis: MemorySSAAnalysis on main
+Skipping pass LICMPass on main due to optnone attribute
+Skipping pass: LICMPass on Loop at depth 1 containing: %6<header><exiting>,%10<latch>
+Skipping pass AlignmentFromAssumptionsPass on main due to optnone attribute
+Skipping pass: AlignmentFromAssumptionsPass on main
+Skipping pass LoopSinkPass on main due to optnone attribute
+Skipping pass: LoopSinkPass on main
+Skipping pass InstSimplifyPass on main due to optnone attribute
+Skipping pass: InstSimplifyPass on main
+Skipping pass DivRemPairsPass on main due to optnone attribute
+Skipping pass: DivRemPairsPass on main
+Skipping pass SimplifyCFGPass on main due to optnone attribute
+Skipping pass: SimplifyCFGPass on main
+Running pass: CoroCleanupPass on main
+Clearing all analysis results for: <possibly invalidated loop>
+Invalidating analysis: DominatorTreeAnalysis on main
+Invalidating analysis: LoopAnalysis on main
+Invalidating analysis: BasicAA on main
+Invalidating analysis: AAManager on main
+Invalidating analysis: ScalarEvolutionAnalysis on main
+Invalidating analysis: InnerAnalysisManagerProxy<llvm::LoopAnalysisManager, llvm::Function> on main
+Invalidating analysis: MemorySSAAnalysis on main
+Running pass: CGProfilePass on [module]
+Running analysis: BlockFrequencyAnalysis on main
+Running analysis: BranchProbabilityAnalysis on main
+Running analysis: LoopAnalysis on main
+Running analysis: DominatorTreeAnalysis on main
+Running analysis: PostDominatorTreeAnalysis on main
+Running pass: GlobalDCEPass on [module]
+Running pass: ConstantMergePass on [module]
+Running pass: RelLookupTableConverterPass on [module]
+Running pass: AnnotationRemarksPass on main
+Running pass: VerifierPass on [module]
+Running analysis: VerifierAnalysis on [module]
+Running pass: PrintModulePass on [module]
