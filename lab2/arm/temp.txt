@@ -1,0 +1,180 @@
+	.arch armv7-a
+
+	.text					@ 代码段
+	.align	1				@ 2^1=2字节对齐
+	.global	fib				@ 定义全局函数fib
+	.syntax unified			@ 语法统一
+	.thumb					@ Thumb指令集
+	.thumb_func				@ Thumb函数
+	.type	fib, %function
+fib:						@ 函数fib
+	push	{r4, r7, lr}	@ 保存寄存器
+	sub	sp, sp, #12			@ 分配栈空间
+	add	r7, sp, #0			@ r7 = sp
+	str	r0, [r7, #4]		@ 将参数n放入栈中
+	ldr	r3, [r7, #4]		@ r3 = n
+	cmp	r3, #1				@ 比较r3和1，大于则跳到L2
+	bgt	.L2
+	movs	r3, #1			@ r3 = 1，跳转到L3
+	b	.L3
+.L2:
+	ldr	r3, [r7, #4]		@ r3 = n
+	subs	r3, r3, #1
+	mov	r0, r3				@ fib参数设成n-1
+	bl	fib(PLT)				@ 递归调用
+	mov	r4, r0				@ 返回值存到r4
+	ldr	r3, [r7, #4]
+	subs	r3, r3, #2
+	mov	r0, r3
+	bl	fib(PLT)
+	mov	r3, r0				@ 计算fin(n-2)，结果存到r3
+	add	r3, r3, r4
+.L3:
+	mov	r0, r3				@ 设置函数返回值
+	adds	r7, r7, #12		@ 调整堆栈空间
+	mov	sp, r7				
+	pop	{r4, r7, pc}
+	.size	fib, .-fib
+
+	.section	.rodata
+	.align	2
+_str0:
+	.ascii	"%d\000"
+	.align	2
+_str1:
+	.ascii	"fib(%d) = %d\012\000"
+
+	.text
+	.align	1
+	.global	main
+	.syntax unified
+	.thumb
+	.thumb_func
+	.type	main, %function
+main:
+	push	{r7, lr}
+	sub	sp, sp, #16			@ 开辟栈空间
+	add	r7, sp, #0			@ r7 = sp
+	ldr	r2, _bridge			@ r2 = _bridge
+.LPIC2:
+	add	r2, pc
+	ldr	r3, _bridge+4
+	ldr	r3, [r2, r3]
+	ldr	r3, [r3]
+	str	r3, [r7, #12]
+	mov	r3, #0
+	adds	r3, r7, #4
+	mov	r1, r3
+	ldr	r3, _bridge+8
+.LPIC0:
+	add	r3, pc
+	mov	r0, r3
+	bl	__isoc99_scanf(PLT)
+	ldr	r3, [r7, #4]
+	mov	r0, r3
+	bl	fib(PLT)
+	str	r0, [r7, #8]
+	ldr	r3, [r7, #4]
+	ldr	r2, [r7, #8]
+	mov	r1, r3
+	ldr	r3, _bridge+12
+.LPIC1:
+	add	r3, pc
+	mov	r0, r3
+	bl	printf(PLT)
+	movs	r3, #0
+	ldr	r1, _bridge+16
+.LPIC3:
+	add	r1, pc
+	ldr	r2, _bridge+4
+	ldr	r2, [r1, r2]
+	ldr	r1, [r2]
+	ldr	r2, [r7, #12]
+	eors	r1, r2, r1
+	mov	r2, #0
+	beq	.L6
+	bl	__stack_chk_fail(PLT)
+.L6:
+	mov	r0, r3
+	adds	r7, r7, #16
+	mov	sp, r7
+	@ sp needed
+	pop	{r7, pc}
+.L8:
+	.align	2
+_bridge:
+	.word	_GLOBAL_OFFSET_TABLE_-(.LPIC2+4)
+	.word	__stack_chk_guard(GOT)
+	.word	_str0-(.LPIC0+4)
+	.word	_str1-(.LPIC1+4)
+	.word	_GLOBAL_OFFSET_TABLE_-(.LPIC3+4)
+	.size	main, .-main
+	.section	.note.GNU-stack,"",%progbits
+
+
+
+	.arch armv7-a
+
+	.comm n, 4				@ n
+	.text
+	.align	2
+
+	.section	.rodata
+	.align	2
+_str0:							@ 输入提示
+	.ascii	"%d\000"
+	.align	2
+_str1:							@ 输出结果
+	.ascii	"fib(%d) = %d\012\000"
+
+	.text
+	.align	2
+
+	.global	fib
+fib:							@ fib函数
+	str fp, [sp, #-4]!			@ 保存fp
+	mov fp, sp					@ 设置fp
+	sub	sp, sp, #8				@ 为局部变量分配栈空间
+	str	r0, [fp, #-4]			@ 保存n
+	cmp	r0, #1					@ 比较n是否大于1
+	bgt	.L2
+	movs	r0, #1				@ n<=1，直接返回
+	add sp, fp, #8				@ 释放栈空间
+	ldr fp, [sp], #4			@ 恢复fp
+	bx	lr
+.L2:
+	push	{r3, r4, r5, lr}
+	mov	r4, r0
+	subs	r0, r0, #1			@ n-1
+	bl	fib						@ 递归调用
+	mov	r5, r0					@ 保存fib(n-1)的结果
+	subs	r0, r4, #2
+	bl	fib
+	add	r0, r0, r5				@ fib(n-1)+fib(n-2)
+	pop	{r3, r4, r5, pc}
+	add sp, fp, #8				@ 释放栈空间
+	ldr fp, [sp], #4			@ 恢复fp
+	bx	lr
+
+	.global	main
+main:
+	push	{fp, lr}			@ 保存寄存器
+	add fp, sp, #4				@ 设置栈帧
+	ldr r1, _bridge				@ r1 = &n
+	ldr r0, _bridge+4			@ *ro = str0
+	bl	__isoc99_scanf
+	ldr	r3, _bridge				@ &n
+	ldr	r0, [r3]				@ n
+	bl	fib						@ fib(n)
+	mov	r1, r0					@ r1 = fib(n)
+	ldr	r0, _bridge+8			@ *ro = str1
+	bl	printf					@ printf
+	movs	r0, #0
+	pop	{fp, pc}
+
+_bridge:
+	.word	n
+	.word	_str0
+	.word	_str1
+
+	.section	.note.GNU-stack,"",%progbits
