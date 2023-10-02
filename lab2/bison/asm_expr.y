@@ -69,7 +69,7 @@ stmt    :       expr  { $$=$1; }
         |       IDENTIFIER ASSIGN expr  {    $$=$3;
                                             addSymbol($1,$3);  // 添加到符号表
                                             printf("ldr R1, =%s\n",$1);
-                                            printf("str R0, [r1]\n");
+                                            printf("str R0, [R1]\n");
                                         }
         ;
 // 完善表达式的规则
