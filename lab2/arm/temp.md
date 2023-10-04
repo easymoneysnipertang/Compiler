@@ -12,3 +12,10 @@ https://blog.csdn.net/weixin_45309916/article/details/107837561
 Bision参考:   
 https://blog.csdn.net/weixin_44007632/article/details/108666375  
 https://zhuanlan.zhihu.com/p/111445997
+
+# 编译指令
+```bash
+arm-linux-gnueabihf-gcc -o fib.s -S -O0 fib.c
+arm-linux-gnueabihf-gcc fib.s -o fib.out
+qemu-arm -L /usr/arm-linux-gnueabihf ./fib.out
+```
