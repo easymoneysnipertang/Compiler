@@ -1269,19 +1269,19 @@ yyreduce:
 
   case 10: /* stmt: CONSTANT TYPE IDENTIFIER ASSIGN expr  */
 #line 99 "SysY2asm.y"
-                                                     {   (yyval.dval)=(yyvsp[0].dval);  // 声明常量且带初值
-                                                    addSymbol((yyvsp[-2].name),(yyvsp[0].dval),true,true);  // 添加到符号表
-                                                    printf("ldr R1, =%s\n",(yyvsp[-3].name));
-                                                    printf("str R0, [R1]\n");
+                                                     {  (yyval.dval)=(yyvsp[0].dval);  // 声明常量且带初值
+                                                        addSymbol((yyvsp[-2].name),(yyvsp[0].dval),true,true);  // 添加到符号表
+                                                        printf("ldr R1, =%s\n",(yyvsp[-2].name));
+                                                        printf("str R0, [R1]\n");
                                                 }
 #line 1278 "SysY2asm.tab.c"
     break;
 
   case 11: /* stmt: CONSTANT TYPE IDENTIFIER  */
 #line 104 "SysY2asm.y"
-                                             {   (yyval.dval)=0;       // 声明常量
-                                            addSymbol((yyvsp[0].name),0,true,false);  // 添加到符号表
-                                        }
+                                            {   (yyval.dval)=0;       // 声明常量
+                                                addSymbol((yyvsp[0].name),0,true,false);  // 添加到符号表
+                                            }
 #line 1286 "SysY2asm.tab.c"
     break;
 
@@ -1289,7 +1289,7 @@ yyreduce:
 #line 109 "SysY2asm.y"
                                 {   
                                     (yyval.dval)=(yyvsp[-2].dval)+(yyvsp[0].dval); 
-                                    printf("ADD R0 R0 R1\n");
+                                    printf("ADD R%d R%d R%d\n",GLOBAL_REG-2,GLOBAL_REG-2,GLOBAL_REG-1);
                                     GLOBAL_REG -= 1;  // 为了连续表达式
                                 }
 #line 1296 "SysY2asm.tab.c"
@@ -1299,7 +1299,7 @@ yyreduce:
 #line 114 "SysY2asm.y"
                                 {   
                                     (yyval.dval)=(yyvsp[-2].dval)-(yyvsp[0].dval);
-                                    printf("SUB R0 R0 R1\n");
+                                     printf("SUB R%d R%d R%d\n",GLOBAL_REG-2,GLOBAL_REG-2,GLOBAL_REG-1);
                                     GLOBAL_REG -= 1;
                                 }
 #line 1306 "SysY2asm.tab.c"
@@ -1309,7 +1309,7 @@ yyreduce:
 #line 119 "SysY2asm.y"
                                 {   
                                     (yyval.dval)=(yyvsp[-2].dval)*(yyvsp[0].dval);
-                                    printf("MUL R0 R0 R1\n"); 
+                                    printf("MUL R%d R%d R%d\n",GLOBAL_REG-2,GLOBAL_REG-2,GLOBAL_REG-1);
                                     GLOBAL_REG -= 1;
                                 }
 #line 1316 "SysY2asm.tab.c"
@@ -1319,7 +1319,7 @@ yyreduce:
 #line 124 "SysY2asm.y"
                                 {   
                                     (yyval.dval)=(yyvsp[-2].dval)/(yyvsp[0].dval);
-                                    printf("DIV R0 R0 R1\n");
+                                     printf("DIV R%d R%d R%d\n",GLOBAL_REG-2,GLOBAL_REG-2,GLOBAL_REG-1);
                                     GLOBAL_REG -= 1; 
                                 }
 #line 1326 "SysY2asm.tab.c"
@@ -1329,7 +1329,7 @@ yyreduce:
 #line 129 "SysY2asm.y"
                                 {   
                                     (yyval.dval)=(yyvsp[-2].dval)&&(yyvsp[0].dval);
-                                    printf("AND R0 R0 R1\n");
+                                     printf("AND R%d R%d R%d\n",GLOBAL_REG-2,GLOBAL_REG-2,GLOBAL_REG-1);
                                     GLOBAL_REG -= 1;
                                 }
 #line 1336 "SysY2asm.tab.c"
@@ -1339,7 +1339,7 @@ yyreduce:
 #line 134 "SysY2asm.y"
                                 {   
                                     (yyval.dval)=(yyvsp[-2].dval)||(yyvsp[0].dval);
-                                    printf("OR R0 R0 R1\n");
+                                     printf("OR R%d R%d R%d\n",GLOBAL_REG-2,GLOBAL_REG-2,GLOBAL_REG-1);
                                     GLOBAL_REG -= 1;
                                 }
 #line 1346 "SysY2asm.tab.c"

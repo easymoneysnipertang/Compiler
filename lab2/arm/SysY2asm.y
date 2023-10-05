@@ -108,32 +108,32 @@ stmt    :       expr    {   $$=$1; }
 // 完善表达式的规则
 expr    :       expr ADD expr   {   
                                     $$=$1+$3; 
-                                    printf("ADD R0 R0 R1\n");
+                                    printf("ADD R%d R%d R%d\n",GLOBAL_REG-2,GLOBAL_REG-2,GLOBAL_REG-1);
                                     GLOBAL_REG -= 1;  // 为了连续表达式
                                 }
         |       expr MINUS expr {   
                                     $$=$1-$3;
-                                    printf("SUB R0 R0 R1\n");
+                                     printf("SUB R%d R%d R%d\n",GLOBAL_REG-2,GLOBAL_REG-2,GLOBAL_REG-1);
                                     GLOBAL_REG -= 1;
                                 }
         |       expr MUL expr   {   
                                     $$=$1*$3;
-                                    printf("MUL R0 R0 R1\n"); 
+                                    printf("MUL R%d R%d R%d\n",GLOBAL_REG-2,GLOBAL_REG-2,GLOBAL_REG-1);
                                     GLOBAL_REG -= 1;
                                 }
         |       expr DIV expr   {   
                                     $$=$1/$3;
-                                    printf("DIV R0 R0 R1\n");
+                                     printf("DIV R%d R%d R%d\n",GLOBAL_REG-2,GLOBAL_REG-2,GLOBAL_REG-1);
                                     GLOBAL_REG -= 1; 
                                 }
         |       expr AND expr   {   
                                     $$=$1&&$3;
-                                    printf("AND R0 R0 R1\n");
+                                     printf("AND R%d R%d R%d\n",GLOBAL_REG-2,GLOBAL_REG-2,GLOBAL_REG-1);
                                     GLOBAL_REG -= 1;
                                 }
         |       expr OR expr    {   
                                     $$=$1||$3;
-                                    printf("OR R0 R0 R1\n");
+                                     printf("OR R%d R%d R%d\n",GLOBAL_REG-2,GLOBAL_REG-2,GLOBAL_REG-1);
                                     GLOBAL_REG -= 1;
                                 }
         |       NOT expr        {   
