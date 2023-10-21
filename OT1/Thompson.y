@@ -314,9 +314,9 @@ void testSet(struct State* t){
 }
 
 int epsilonClosure(struct State* T_begin,struct State* T_end){  // 求闭包
-    bool* visited = (bool*)malloc(sizeof(bool)*nfa_state_num);  // 记录是否访问过
-    int num=1;
     // 从T出发，经过空串能到达的状态集合
+    bool* visited = (bool*)malloc(sizeof(bool)*nfa_state_num);  // 记录是否访问过
+    int num=1;  // 记录集合中状态的数量
     // 状态链接在state的第三条边上，链表构成集合
     struct State* queueFront,*queueRear;
     // 传入的T是一个集合
@@ -340,20 +340,104 @@ int epsilonClosure(struct State* T_begin,struct State* T_end){  // 求闭包
         // 出队（把队列头指向下一个）
         queueFront = queueFront->edgeOut[2].next;
     }
+    free(visited);
     // 返回的链表是有序的，因为我id就是这么给的
     return num;
 }
 
+struct State* move(struct State* T_begin,char c,int T_num,struct State* Dest){  // move
+    // 从T出发，经过c能到达的状态集合
+    bool* visited = (bool*)malloc(sizeof(bool)*nfa_state_num);  // 记录是否访问过
+    // 状态链接在state的第三条边上，链表构成集合
+    struct State* queueFront = T_begin,*DestBegin = NULL;
+    // 遍历集合，每个状态执行一个动作
+    for(int i=0;i<T_num;i++)
+    {
+        // 遍历每个状态的出边
+        for(int j=0;j<queueFront->edgeNum;j++){
+            if(queueFront->edgeOut[j].c==c&&visited[queueFront->edgeOut[j].next->id]==false){  // 找到个符合的边
+                if(DestBegin==NULL){  // 第一个
+                    DestBegin = Dest = queueFront->edgeOut[j].next;
+                }
+                else{  // 不是第一个
+                    // 连接到队列尾
+                    Dest->edgeOut[2].next = queueFront->edgeOut[j].next;
+                    Dest = Dest->edgeOut[2].next;
+                }
+                Dest->edgeOut[2].next = NULL;  // 队列尾的下一个置空
+                visited[Dest->id] = true;  // 避免重复进
+            }
+        }
+        // 出队（把队列头指向下一个）
+        queueFront = queueFront->edgeOut[2].next;
+    }
+    free(visited);
+    // TODO：有可能一个都没有
+    return DestBegin;
+}
+
 struct DFA* NFA2DFA(struct NFA* nfa){
+    int id = 0;
     struct DFA* dfa = (struct DFA*)malloc(sizeof(struct DFA));
     // 开始状态
     struct DFAState* start = (struct DFAState*)malloc(sizeof(struct DFAState));
     start->edgeNum = 0;
     start->nfaStateNum = epsilonClosure(nfa->start,nfa->start);
     start->nfaState = nfa->start;
-    start->id = 0;  // id直接编号
+    start->id = id++;  // id直接编号
     testSet(start->nfaState);
-     
+    // 初始化队列
+    struct DFAState* queueFront,*queueRear;
+    queueFront = queueRear = start;
+    // 遍历每个未标记状态
+    while(queueFront!=NULL){
+        // 遍历每个字符
+        for(char c='a';c<='z';c++){  // TODO：创建字符表
+            // move
+            struct State* DestBegin,*Dest=NULL;
+            DestBegin = move(queueFront->nfaState, c, queueFront->nfaStateNum, Dest);
+            if(DestBegin==NULL)  // 没有move出去
+                continue;
+            else{
+                // 计算epsilon闭包
+                int DestNum = epsilonClosure(DestBegin,Dest);
+                // 创建新状态
+                struct DFAState* DestState = (struct DFAState*)malloc(sizeof(struct DFAState));
+                DestState->edgeNum = 0;
+                DestState->nfaStateNum = DestNum;
+                DestState->nfaState = DestBegin;
+                // TODO：判断是否存在，进而决定是否加入队列和id，还有给front添加edge！
+                
+                // 下面是copilot生成↓，后面慢慢改
+                // 判断是否已经存在
+                struct DFAState* temp = dfa->start;
+                bool flag = false;
+                while(temp!=NULL){
+                    if(temp->nfaStateNum==Dest->nfaStateNum){
+                        flag = true;
+                        break;
+                    }
+                    temp = temp->edgeOut[2].next;
+                }
+                if(flag==false){  // 不存在
+                    // 连接到队列尾
+                    queueRear->edgeOut[queueRear->edgeNum].c = c;
+                    queueRear->edgeOut[queueRear->edgeNum++].next = Dest;
+                    queueRear = queueRear->edgeOut[queueRear->edgeNum-1].next;
+                    queueRear->edgeOut[2].next = NULL;  // 队列尾的下一个置空
+                }
+                else{  // 存在
+                    // 连接到队列尾
+                    queueRear->edgeOut[queueRear->edgeNum].c = c;
+                    queueRear->edgeOut[queueRear->edgeNum++].next = temp;
+                    queueRear = queueRear->edgeOut[queueRear->edgeNum-1].next;
+                    queueRear->edgeOut[2].next = NULL;  // 队列尾的下一个置空
+                }
+            }
+        }
+        // 出队（把队列头指向下一个）
+        queueFront = queueFront->edgeOut[2].next;
+    }
 }
 
 
