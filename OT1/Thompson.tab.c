@@ -71,8 +71,9 @@
 
 /*********************************************
 YACC file
-Date:2023/10/20
-实现Thompson构造法，从正则表达式转NFA
+1. 实现Thompson构造法，从正则表达式转NFA(finish date:2023/10/20)
+2. 实现子集构造法，从NFA转DFA(finish date:)
+3. 实现DFA的最小化(finish date:)
 **********************************************/
 #include<stdio.h>
 #include<stdlib.h>
@@ -84,6 +85,7 @@ int yylex();
 extern int yyparse();
 FILE* yyin;
 void yyerror(const char* s);
+// 实现Thompson构造法
 struct State* newState(int edgeNum);
 void addEdge(struct State* begin,struct State* end,char c);
 struct NFA* newNFA(char c);
@@ -93,9 +95,16 @@ struct NFA* orNFA(struct NFA* nfa1,struct NFA* nfa2);
 void printNFA(struct NFA* nfa);
 void dumpNFA(struct NFA* nfa);
 
+// 子集构造法，从NFA转DFA
+void testSet(struct State* t);
+int epsilonClosure(struct State* T_begin,struct State* T_end);
+struct DFA* NFA2DFA(struct NFA* nfa);
+
 
 #define none '$'  // 空串
+int FILE_NUM = 0;  // 一行一个文件
 
+int nfa_state_num;  // nfa总状态数
 struct Edge{  // NFA的一条边
     char c;  // 边上的字符
     struct State* next;  // 边指向的下一个状态
@@ -112,10 +121,26 @@ struct NFA{  // NFA由一连串的状态和边组成
     struct State* end;  // 结束状态
 };
 
+struct DFAEdge{  // DFA的一条边
+    char c;  // 边上的字符
+    struct DFAState* next;  // 边指向的下一个状态
+};
+struct DFAState{  // DFA的一个状态
+    int id;  // 状态编号
+    struct State* nfaState;  // 对应的NFA状态
+    int nfaStateNum;  // 对应的NFA状态的数量
+    struct DFAEdge* edgeOut;  // 状态的出边
+    int edgeNum;  // 出边的数量
+};
+struct DFA{
+    struct DFAState* start;  // 开始状态
+    struct DFAState* end;  // 结束状态
+};
 
 
 
-#line 119 "Thompson.tab.c"
+
+#line 144 "Thompson.tab.c"
 
 # ifndef YY_CAST
 #  ifdef __cplusplus
@@ -183,12 +208,12 @@ extern int yydebug;
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 49 "Thompson.y"
+#line 74 "Thompson.y"
 
     char cval;  // 字符
     struct NFA* nval;  // 控制NFA
 
-#line 192 "Thompson.tab.c"
+#line 217 "Thompson.tab.c"
 
 };
 typedef union YYSTYPE YYSTYPE;
@@ -610,8 +635,8 @@ static const yytype_int8 yytranslate[] =
 /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_int8 yyrline[] =
 {
-       0,    75,    75,    76,    77,    78,    80,    81,    83,    84,
-      86,    87,    88
+       0,   100,   100,   106,   107,   108,   110,   111,   113,   114,
+     116,   117,   118
 };
 #endif
 
@@ -1176,61 +1201,66 @@ yyreduce:
   switch (yyn)
     {
   case 2: /* lines: lines expr ';'  */
-#line 75 "Thompson.y"
-                               { dumpNFA((yyvsp[-1].nval)); printf("----------\n"); }
-#line 1182 "Thompson.tab.c"
-    break;
-
-  case 4: /* lines: lines QUIT  */
-#line 77 "Thompson.y"
-                            { exit(0); }
-#line 1188 "Thompson.tab.c"
-    break;
-
-  case 6: /* expr: expr OR term_connect  */
-#line 80 "Thompson.y"
-                                     { (yyval.nval) = orNFA((yyvsp[-2].nval),(yyvsp[0].nval)); }
-#line 1194 "Thompson.tab.c"
-    break;
-
-  case 7: /* expr: term_connect  */
-#line 81 "Thompson.y"
-                             { (yyval.nval) = (yyvsp[0].nval); }
-#line 1200 "Thompson.tab.c"
-    break;
-
-  case 8: /* term_connect: term term_connect  */
-#line 83 "Thompson.y"
-                                          { (yyval.nval) = connectNFA((yyvsp[-1].nval),(yyvsp[0].nval)); }
-#line 1206 "Thompson.tab.c"
-    break;
-
-  case 9: /* term_connect: term  */
-#line 84 "Thompson.y"
-                     { (yyval.nval) = (yyvsp[0].nval); }
+#line 100 "Thompson.y"
+                               {    nfa_state_num=0; 
+                                    dumpNFA((yyvsp[-1].nval)); 
+                                    printf("----------\n"); 
+                                    FILE_NUM++;
+                                    NFA2DFA((yyvsp[-1].nval));
+                                }
 #line 1212 "Thompson.tab.c"
     break;
 
-  case 10: /* term: term CLOSURE  */
-#line 86 "Thompson.y"
-                             { (yyval.nval) = closureNFA((yyvsp[-1].nval)); }
+  case 4: /* lines: lines QUIT  */
+#line 107 "Thompson.y"
+                            { exit(0); }
 #line 1218 "Thompson.tab.c"
     break;
 
-  case 11: /* term: LBRACE expr RBRACE  */
-#line 87 "Thompson.y"
-                                   { (yyval.nval) = (yyvsp[-1].nval); }
+  case 6: /* expr: expr OR term_connect  */
+#line 110 "Thompson.y"
+                                     { (yyval.nval) = orNFA((yyvsp[-2].nval),(yyvsp[0].nval)); }
 #line 1224 "Thompson.tab.c"
     break;
 
-  case 12: /* term: CHAR  */
-#line 88 "Thompson.y"
-                     { (yyval.nval) = newNFA((yyvsp[0].cval)); }
+  case 7: /* expr: term_connect  */
+#line 111 "Thompson.y"
+                             { (yyval.nval) = (yyvsp[0].nval); }
 #line 1230 "Thompson.tab.c"
     break;
 
+  case 8: /* term_connect: term term_connect  */
+#line 113 "Thompson.y"
+                                          { (yyval.nval) = connectNFA((yyvsp[-1].nval),(yyvsp[0].nval)); }
+#line 1236 "Thompson.tab.c"
+    break;
 
-#line 1234 "Thompson.tab.c"
+  case 9: /* term_connect: term  */
+#line 114 "Thompson.y"
+                     { (yyval.nval) = (yyvsp[0].nval); }
+#line 1242 "Thompson.tab.c"
+    break;
+
+  case 10: /* term: term CLOSURE  */
+#line 116 "Thompson.y"
+                             { (yyval.nval) = closureNFA((yyvsp[-1].nval)); }
+#line 1248 "Thompson.tab.c"
+    break;
+
+  case 11: /* term: LBRACE expr RBRACE  */
+#line 117 "Thompson.y"
+                                   { (yyval.nval) = (yyvsp[-1].nval); }
+#line 1254 "Thompson.tab.c"
+    break;
+
+  case 12: /* term: CHAR  */
+#line 118 "Thompson.y"
+                     { (yyval.nval) = newNFA((yyvsp[0].cval)); }
+#line 1260 "Thompson.tab.c"
+    break;
+
+
+#line 1264 "Thompson.tab.c"
 
       default: break;
     }
@@ -1423,7 +1453,7 @@ yyreturnlab:
   return yyresult;
 }
 
-#line 92 "Thompson.y"
+#line 122 "Thompson.y"
 
 
 // programs section
@@ -1460,7 +1490,7 @@ int yylex()  // 词法分析器
     }
 }
 
-
+// 实现Thompson构造法，从正则表达式转NFA
 struct State* newState(int edgeNum){  // 辅助函数
     // 生成一个新的状态
     struct State* s = (struct State*)malloc(sizeof(struct State));
@@ -1569,12 +1599,14 @@ void printNFA(struct NFA* nfa){  // 打印NFA，调试用
 }
 
 void dumpNFA(struct NFA* nfa){  // 输出到dot文件
-    FILE *fp = freopen("dumpedNFA.dot", "w", stdout);  // 重定向
+    char filename[20];
+    sprintf(filename,"NFA%d.dot",FILE_NUM);
+    FILE *fp = fopen(filename, "w");
     if (fp == NULL){
         printf("error opening file\n");
         exit(-1);
     }
-    printf("digraph G {\n");
+    fprintf(fp,"digraph G {\n");
 
     int id = 0;  // 最后为每个状态编号
     // 还得自己写个队列，没有list.h
@@ -1594,21 +1626,72 @@ void dumpNFA(struct NFA* nfa){  // 输出到dot文件
                 queueRear->visited = true;  // 进队列就代表访问过了，不重复进
             }
             // 打印状态图
-            printf("\t%d -> %d [label=\"%c\"];\n",queueFront->id,queueFront->edgeOut[i].next->id,queueFront->edgeOut[i].c);
+            fprintf(fp,"\t%d -> %d [label=\"%c\"];\n",queueFront->id,queueFront->edgeOut[i].next->id,queueFront->edgeOut[i].c);
         }
         // 出队（把队列头指向下一个）
         queueFront = queueFront->edgeOut[2].next;
     }
-    // 释放队列
-    struct State* freelist = nfa->start;
-    for(int i=0;i<id;i++){
-        struct State* temp = freelist->edgeOut[2].next;
-        free(freelist);
-        freelist = temp;
-    }
-    printf("}\n");
+    fprintf(fp,"}\n");
     fclose(fp);
+    // 不释放队列，后续转DFA接着用
+    nfa_state_num = id;  // 记录nfa总状态数
 }
+
+// 子集构造法，从NFA转DFA
+void testSet(struct State* t){
+    printf("testSet\n");
+    struct State* s = t;
+    while(s!=NULL){
+        printf("State%d ",s->id);
+        s = s->edgeOut[2].next;
+    }
+    printf("\n");
+}
+
+int epsilonClosure(struct State* T_begin,struct State* T_end){  // 求闭包
+    bool* visited = (bool*)malloc(sizeof(bool)*nfa_state_num);  // 记录是否访问过
+    int num=1;
+    // 从T出发，经过空串能到达的状态集合
+    // 状态链接在state的第三条边上，链表构成集合
+    struct State* queueFront,*queueRear;
+    // 传入的T是一个集合
+    queueFront = queueRear = T_begin;
+    while(queueRear!=T_end){  // 找到T的尾部
+        visited[queueRear->id] = true;  // 进队列就代表访问过了，不重复进
+        queueRear = queueRear->edgeOut[2].next;
+    }
+    visited[queueRear->id] = true;  // 尾部不漏
+    while(queueFront!=NULL){  // 队列不为空
+        for(int i=0;i<queueFront->edgeNum;i++){  // BFS遍历出边
+            if(queueFront->edgeOut[i].c==none&&visited[queueFront->edgeOut[i].next->id]==false){  // 没有访问过，入队
+                // 连接到队列尾
+                queueRear->edgeOut[2].next = queueFront->edgeOut[i].next;
+                queueRear = queueRear->edgeOut[2].next;
+                queueRear->edgeOut[2].next = NULL;  // 队列尾的下一个置空
+                visited[queueRear->id] = true;  // 进队列就代表访问过了，不重复进
+                num++;
+            }
+        }
+        // 出队（把队列头指向下一个）
+        queueFront = queueFront->edgeOut[2].next;
+    }
+    // 返回的链表是有序的，因为我id就是这么给的
+    return num;
+}
+
+struct DFA* NFA2DFA(struct NFA* nfa){
+    struct DFA* dfa = (struct DFA*)malloc(sizeof(struct DFA));
+    // 开始状态
+    struct DFAState* start = (struct DFAState*)malloc(sizeof(struct DFAState));
+    start->edgeNum = 0;
+    start->nfaStateNum = epsilonClosure(nfa->start,nfa->start);
+    start->nfaState = nfa->start;
+    start->id = 0;  // id直接编号
+    testSet(start->nfaState);
+     
+}
+
+
 
 int main(void)
 {
