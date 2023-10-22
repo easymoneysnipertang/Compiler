@@ -1534,7 +1534,7 @@ struct symbol* findSymbol(char c){
 void addSymbol(char c){
     // 向符号表中添加一个符号
     struct symbol *s = findSymbol(c);
-    if(s!=NULL)  // 如果已经存在
+    if(s!=NULL||c==none)  // 如果已经存在
         return;
     // 否则创建一个新的符号
     s = malloc(sizeof(struct symbol));
@@ -1877,6 +1877,7 @@ struct DFAState* isExist(struct DFAState* queueFront,int totalStateNum,struct DF
     return NULL;
 }
 
+// TODO：输epsilon会出问题
 struct DFA* NFA2DFA(struct NFA* nfa){  // 子集构造法
     int id = 0;
     struct DFA* dfa = (struct DFA*)malloc(sizeof(struct DFA));
