@@ -1,6 +1,7 @@
 %{
 /*********************************************
 YACC file
+可以用C++写！！！
 1. 实现Thompson构造法，从正则表达式转NFA(finish date:2023/10/20)
 2. 实现子集构造法，从NFA转DFA(finish date:)
 3. 实现DFA的最小化(finish date:)
@@ -27,14 +28,16 @@ void dumpNFA(struct NFA* nfa);
 
 // 子集构造法，从NFA转DFA
 void testSet(struct State* t);
-int epsilonClosure(struct State* T_begin,struct State* T_end);
+int epsilonClosure(struct State* T_begin,struct State* T_end,bool* isAccept);
 struct DFA* NFA2DFA(struct NFA* nfa);
 
 
 #define none '$'  // 空串
 int FILE_NUM = 0;  // 一行一个文件
 
+int nfa_accept_id;  // nfa接收状态的id
 int nfa_state_num;  // nfa总状态数
+
 struct Edge{  // NFA的一条边
     char c;  // 边上的字符
     struct State* next;  // 边指向的下一个状态
@@ -54,13 +57,15 @@ struct NFA{  // NFA由一连串的状态和边组成
 struct DFAEdge{  // DFA的一条边
     char c;  // 边上的字符
     struct DFAState* next;  // 边指向的下一个状态
+    struct DFAEdge* nextEdge;  // 下一条边
 };
 struct DFAState{  // DFA的一个状态
     int id;  // 状态编号
     struct State* nfaState;  // 对应的NFA状态
     int nfaStateNum;  // 对应的NFA状态的数量
-    struct DFAEdge* edgeOut;  // 状态的出边
+    struct DFAEdge* edgeOut;  // 状态的出边，是一个链表，第一条边负责串接队列
     int edgeNum;  // 出边的数量
+    bool isAccept;  // 是否是接收状态
 };
 struct DFA{
     struct DFAState* start;  // 开始状态
@@ -286,9 +291,12 @@ void dumpNFA(struct NFA* nfa){  // 输出到dot文件
                 // 连接到队列尾
                 queueRear->edgeOut[2].next = queueFront->edgeOut[i].next;
                 queueRear = queueRear->edgeOut[2].next;
-                queueRear->id = id++;  // 状态编号
                 queueRear->edgeOut[2].next = NULL;  // 队列尾的下一个置空
                 queueRear->visited = true;  // 进队列就代表访问过了，不重复进
+                
+                queueRear->id = id++;  // 状态编号
+                if(queueRear->edgeNum==0)  // 接收状态
+                    nfa_accept_id = queueRear->id;
             }
             // 打印状态图
             fprintf(fp,"\t%d -> %d [label=\"%c\"];\n",queueFront->id,queueFront->edgeOut[i].next->id,queueFront->edgeOut[i].c);
@@ -296,6 +304,8 @@ void dumpNFA(struct NFA* nfa){  // 输出到dot文件
         // 出队（把队列头指向下一个）
         queueFront = queueFront->edgeOut[2].next;
     }
+    // 打印接收状态
+    fprintf(fp,"\t%d [shape=doublecircle];\n",nfa_accept_id);
     fprintf(fp,"}\n");
     fclose(fp);
     // 不释放队列，后续转DFA接着用
@@ -313,7 +323,7 @@ void testSet(struct State* t){
     printf("\n");
 }
 
-int epsilonClosure(struct State* T_begin,struct State* T_end){  // 求闭包
+int epsilonClosure(struct State* T_begin,struct State* T_end,bool* isAccept){  // 求闭包
     // 从T出发，经过空串能到达的状态集合
     bool* visited = (bool*)malloc(sizeof(bool)*nfa_state_num);  // 记录是否访问过
     int num=1;  // 记录集合中状态的数量
@@ -324,6 +334,10 @@ int epsilonClosure(struct State* T_begin,struct State* T_end){  // 求闭包
     while(queueRear!=T_end){  // 找到T的尾部
         visited[queueRear->id] = true;  // 进队列就代表访问过了，不重复进
         queueRear = queueRear->edgeOut[2].next;
+        num++;
+
+        if(queueRear->id==nfa_accept_id)  // 接收状态
+            *isAccept = true;
     }
     visited[queueRear->id] = true;  // 尾部不漏
     while(queueFront!=NULL){  // 队列不为空
@@ -335,6 +349,9 @@ int epsilonClosure(struct State* T_begin,struct State* T_end){  // 求闭包
                 queueRear->edgeOut[2].next = NULL;  // 队列尾的下一个置空
                 visited[queueRear->id] = true;  // 进队列就代表访问过了，不重复进
                 num++;
+
+                if(queueRear->id==nfa_accept_id)  // 接收状态
+                    *isAccept = true;
             }
         }
         // 出队（把队列头指向下一个）
@@ -349,7 +366,7 @@ struct State* move(struct State* T_begin,char c,int T_num,struct State** DestEnd
     // 从T出发，经过c能到达的状态集合
     bool* visited = (bool*)malloc(sizeof(bool)*nfa_state_num);  // 记录是否访问过
     // 状态链接在state的第三条边上，链表构成集合
-    struct State* queueFront = T_begin,*DestBegin = NULL,*Dest;
+    struct State* queueFront = T_begin,*DestBegin = NULL,*Dest = NULL;
     // 遍历集合，每个状态执行一个动作
     for(int i=0;i<T_num;i++)
     {
@@ -372,25 +389,93 @@ struct State* move(struct State* T_begin,char c,int T_num,struct State** DestEnd
         queueFront = queueFront->edgeOut[2].next;
     }
     free(visited);
-    // C语言不能传引用，所以用指针的指针
     *DestEnd = Dest;
-    // TODO：有可能一个都没有
+    // 有可能一个都没有
     return DestBegin;
+}
+
+struct DFAState* newDFAState(int edgeNum){  // 辅助函数
+    // 生成一个新的状态
+    struct DFAState* s = (struct DFAState*)malloc(sizeof(struct DFAState));
+    s->edgeNum = edgeNum;
+    s->isAccept = false;
+    // 第一条边负责串接队列
+    struct DFAEdge* e = (struct DFAEdge*)malloc(sizeof(struct DFAEdge));
+    e->next = NULL;
+    e->nextEdge = NULL;
+    s->edgeOut = e;
+    s->edgeNum++;
+
+    return s;
+}
+
+void addDFAEdge(struct DFAState* begin,struct DFAState* end,char c){  // 辅助函数
+    // DFA边动态分配，用链表连起来，第一条边负责串接队列
+    struct DFAEdge* e = (struct DFAEdge*)malloc(sizeof(struct DFAEdge));
+    e->c = c;
+    e->next = end;
+    e->nextEdge = NULL;
+    // 链接边到集合中
+    struct DFAEdge* temp = begin->edgeOut;
+    for(int i=0;i<begin->edgeNum;i++){  // 找到最后一条边
+        if(temp->nextEdge==NULL){
+            temp->nextEdge = e;
+            begin->edgeNum++;
+            break;
+        }
+        temp = temp->nextEdge;
+    }
+}
+
+struct DFAState* isExist(struct DFAState* queueFront,int totalStateNum,struct DFAState* check){  // 辅助函数
+    // 判断状态是否存在
+    for(int i=0;i<totalStateNum;i++){
+        if(queueFront->nfaStateNum==check->nfaStateNum){
+            bool findDFA = true;
+            // 遍历DFA的每个NFA状态
+            struct State* s1 = queueFront->nfaState;
+            struct State* s2 = check->nfaState;
+            for(int j=0;j<queueFront->nfaStateNum;j++){
+                // 不一定是按顺序的，所以要遍历
+                struct State* temp = s2;
+                bool findNFA = false;
+                for(int k=0;k<check->nfaStateNum;k++){
+                    if(s1->id == temp->id){
+                        findNFA = true;
+                        break;
+                    }
+                    temp = temp->edgeOut[2].next;
+                }
+                if(findNFA==false){  // 有一个NFA状态没找到
+                    findDFA = false;
+                    break;
+                }
+                s1 = s1->edgeOut[2].next;  // 下一个NFA状态
+            }
+            if(findDFA)
+                return queueFront;
+        }
+        // 下一个DFA状态
+        queueFront = queueFront->edgeOut->next;
+    }
+    return NULL;
 }
 
 struct DFA* NFA2DFA(struct NFA* nfa){
     int id = 0;
     struct DFA* dfa = (struct DFA*)malloc(sizeof(struct DFA));
     // 开始状态
-    struct DFAState* start = (struct DFAState*)malloc(sizeof(struct DFAState));
-    start->edgeNum = 0;
-    start->nfaStateNum = epsilonClosure(nfa->start,nfa->start);  // 计算epsilon闭包
+    struct DFAState* start = newDFAState(0);
+    start->nfaStateNum = epsilonClosure(nfa->start,nfa->start,&start->isAccept);  // 计算epsilon闭包
     start->nfaState = nfa->start;
     start->id = id++;  // id直接编号
-    testSet(start->nfaState);
+    dfa->start = start;
+    //testSet(start->nfaState);
+
     // 初始化队列
     struct DFAState* queueFront,*queueRear;
     queueFront = queueRear = start;
+    
     // 遍历每个未标记状态
     while(queueFront!=NULL){
         // 遍历每个字符
@@ -403,26 +488,41 @@ struct DFA* NFA2DFA(struct NFA* nfa){
                 continue;
             else{
                 // 计算epsilon闭包
-                printf("DestBegin: %d\n",DestBegin->id);
-                printf("Dest: %d\n",Dest->id);
-                int DestNum = epsilonClosure(DestBegin,Dest);
+                //printf("DestBegin: %d\n",DestBegin->id);
+                //printf("Dest: %d\n",Dest->id);
+                int DestNum = epsilonClosure(DestBegin,Dest,&queueFront->isAccept);
                 // 创建新状态
-                struct DFAState* DestState = (struct DFAState*)malloc(sizeof(struct DFAState));
-                DestState->edgeNum = 0;
+                struct DFAState* DestState = newDFAState(0);
                 DestState->nfaStateNum = DestNum;
                 DestState->nfaState = DestBegin;
                 //testSet(DestState->nfaState);
-                // TODO：判断是否存在，进而决定是否加入队列和id，还要给front添加edge！
-                
-                // TODO：下面是copilot生成↓，后面慢慢改
-                // 判断是否已经存在
-                
+
+                // 判断是否已经存在该状态
+                struct DFAState* temp = isExist(dfa->start,id,DestState);
+                if(temp == NULL){  // 不存在
+                    //printf("new state\n");
+                    DestState->id = id++;
+                    // 添加到队列
+                    queueRear->edgeOut->next = DestState;
+                    queueRear = queueRear->edgeOut->next;
+
+                    // 添加边
+                    addDFAEdge(queueFront,queueRear,c);
+                }
+                else{  // 存在
+                    //printf("exist state\n");
+                    // 释放新状态
+                    free(DestState->edgeOut);
+                    free(DestState);
+                    // 添加边
+                    addDFAEdge(queueFront,temp,c);
+                }
             }
         }
         // 出队（把队列头指向下一个）
-        break;
-        //queueFront = queueFront->edgeOut[2].next;
+        queueFront = queueFront->edgeOut->next;
     }
+    return NULL;
 }
 
 
