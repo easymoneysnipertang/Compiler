@@ -27,9 +27,14 @@ void printNFA(struct NFA* nfa);
 void dumpNFA(struct NFA* nfa);
 
 // 子集构造法，从NFA转DFA
-void testSet(struct State* t);
+void testSet(struct State* t,int num);
 int epsilonClosure(struct State* T_begin,struct State* T_end,bool* isAccept);
 struct DFA* NFA2DFA(struct NFA* nfa);
+struct State* move(struct State* T_begin,char c,int T_num,struct State** DestEnd);
+struct DFAState* newDFAState(int edgeNum);
+void addDFAEdge(struct DFAState* begin,struct DFAState* end,char c);
+struct DFAState* isExist(struct DFAState* queueFront,int totalStateNum,struct DFAState* check);
+void dumpDFA(struct DFA* dfa);
 
 
 #define none '$'  // 空串
@@ -69,7 +74,7 @@ struct DFAState{  // DFA的一个状态
 };
 struct DFA{
     struct DFAState* start;  // 开始状态
-    struct DFAState* end;  // 结束状态
+    //struct DFAState* end;  // 结束状态
 };
 
 
@@ -106,7 +111,8 @@ lines   :       lines expr ';' {    nfa_state_num=0;
                                     dumpNFA($2); 
                                     printf("----------\n"); 
                                     FILE_NUM++;
-                                    NFA2DFA($2);
+                                    struct DFA* dfa = NFA2DFA($2);
+                                    dumpDFA(dfa);
                                 }
         |       lines ';'
         |       lines QUIT  { exit(0); }
@@ -313,12 +319,11 @@ void dumpNFA(struct NFA* nfa){  // 输出到dot文件
 }
 
 // 子集构造法，从NFA转DFA
-void testSet(struct State* t){
-    printf("testSet\n");
-    struct State* s = t;
-    while(s!=NULL){
-        printf("State%d ",s->id);
-        s = s->edgeOut[2].next;
+void testSet(struct State* t,int num){
+    printf("testSet: ");
+    for(int i=0;i<num;i++){
+        printf("%d ",t->id);
+        t = t->edgeOut[2].next;
     }
     printf("\n");
 }
@@ -331,6 +336,9 @@ int epsilonClosure(struct State* T_begin,struct State* T_end,bool* isAccept){  /
     struct State* queueFront,*queueRear;
     // 传入的T是一个集合
     queueFront = queueRear = T_begin;
+    if(queueRear->id==nfa_accept_id)  // 接收状态
+            *isAccept = true;
+
     while(queueRear!=T_end){  // 找到T的尾部
         visited[queueRear->id] = true;  // 进队列就代表访问过了，不重复进
         queueRear = queueRear->edgeOut[2].next;
@@ -461,7 +469,7 @@ struct DFAState* isExist(struct DFAState* queueFront,int totalStateNum,struct DF
     return NULL;
 }
 
-struct DFA* NFA2DFA(struct NFA* nfa){
+struct DFA* NFA2DFA(struct NFA* nfa){  // TODO：应该开辟nfa状态，一个nfa状态可能会属于多个dfa状态，多个字符就会错
     int id = 0;
     struct DFA* dfa = (struct DFA*)malloc(sizeof(struct DFA));
     // 开始状态
@@ -470,7 +478,7 @@ struct DFA* NFA2DFA(struct NFA* nfa){
     start->nfaState = nfa->start;
     start->id = id++;  // id直接编号
     dfa->start = start;
-    //testSet(start->nfaState);
+    //testSet(start->nfaState,start->nfaStateNum);
 
     // 初始化队列
     struct DFAState* queueFront,*queueRear;
@@ -487,15 +495,14 @@ struct DFA* NFA2DFA(struct NFA* nfa){
             if(DestBegin==NULL)  // 没有move出去
                 continue;
             else{
-                // 计算epsilon闭包
                 //printf("DestBegin: %d\n",DestBegin->id);
                 //printf("Dest: %d\n",Dest->id);
-                int DestNum = epsilonClosure(DestBegin,Dest,&queueFront->isAccept);
                 // 创建新状态
                 struct DFAState* DestState = newDFAState(0);
-                DestState->nfaStateNum = DestNum;
+                // 计算epsilon闭包
+                DestState->nfaStateNum = epsilonClosure(DestBegin,Dest,&DestState->isAccept);
                 DestState->nfaState = DestBegin;
-                //testSet(DestState->nfaState);
+                //testSet(DestState->nfaState,DestState->nfaStateNum);
 
                 // 判断是否已经存在该状态
                 struct DFAState* temp = isExist(dfa->start,id,DestState);
@@ -522,9 +529,42 @@ struct DFA* NFA2DFA(struct NFA* nfa){
         // 出队（把队列头指向下一个）
         queueFront = queueFront->edgeOut->next;
     }
-    return NULL;
+
+    return dfa;
 }
 
+void dumpDFA(struct DFA* dfa){  // 输出到dot文件
+    char filename[20];
+    sprintf(filename,"DFA%d.dot",FILE_NUM-1);
+    FILE *fp = fopen(filename, "w");
+    if (fp == NULL){
+        printf("error opening file\n");
+        exit(-1);
+    }
+    fprintf(fp,"digraph G {\n");
+
+    struct DFAState* queueFront;
+    struct DFAEdge* edgePtr;
+    // 初始化队列
+    queueFront = dfa->start;
+
+    while(queueFront!=NULL){  // 队列不为空
+        edgePtr = queueFront->edgeOut->nextEdge;  // 第一条边负责串接队列
+        for(int i=1;i<queueFront->edgeNum;i++){  // BFS遍历出边
+            // 打印状态图
+            fprintf(fp,"\t%d -> %d [label=\"%c\"];\n",queueFront->id,edgePtr->next->id,edgePtr->c);
+            edgePtr = edgePtr->nextEdge;
+        }
+        // 打印接收状态
+        if(queueFront->isAccept)
+            fprintf(fp,"\t%d [shape=doublecircle];\n",queueFront->id);
+        // 出队（把队列头指向下一个）
+        queueFront = queueFront->edgeOut->next;
+    }
+
+    fprintf(fp,"}\n");
+    fclose(fp);
+}
 
 
 int main(void)
