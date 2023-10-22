@@ -86,6 +86,12 @@ int yylex();
 extern int yyparse();
 FILE* yyin;
 void yyerror(const char* s);
+
+// 操作符号表
+struct symbol* findSymbol(char c);
+void addSymbol(char c);
+void cleanSymbolTable();
+
 // 实现Thompson构造法
 struct State* newState(int edgeNum);
 void addEdge(struct State* begin,struct State* end,char c);
@@ -107,6 +113,15 @@ void addDFAEdge(struct DFAState* begin,struct DFAState* end,char c);
 struct DFAState* isExist(struct DFAState* queueFront,int totalStateNum,struct DFAState* check);
 void dumpDFA(struct DFA* dfa);
 
+
+// 符号表
+struct symbol{
+    char c;
+    struct symbol *next;
+};
+// 头指针
+struct symbol *symbolTable = NULL;
+int totalSymbolNum = 0;  // 符号表中符号的数量
 
 #define none '$'  // 空串
 int FILE_NUM = 0;  // 一行一个文件
@@ -151,7 +166,7 @@ struct DFA{
 
 
 
-#line 155 "Thompson.tab.c"
+#line 170 "Thompson.tab.c"
 
 # ifndef YY_CAST
 #  ifdef __cplusplus
@@ -219,12 +234,12 @@ extern int yydebug;
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 85 "Thompson.y"
+#line 100 "Thompson.y"
 
     char cval;  // 字符
     struct NFA* nval;  // 控制NFA
 
-#line 228 "Thompson.tab.c"
+#line 243 "Thompson.tab.c"
 
 };
 typedef union YYSTYPE YYSTYPE;
@@ -646,8 +661,8 @@ static const yytype_int8 yytranslate[] =
 /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_uint8 yyrline[] =
 {
-       0,   111,   111,   118,   119,   120,   122,   123,   125,   126,
-     128,   129,   130
+       0,   126,   126,   134,   135,   136,   138,   139,   141,   142,
+     144,   145,   146
 };
 #endif
 
@@ -1212,67 +1227,70 @@ yyreduce:
   switch (yyn)
     {
   case 2: /* lines: lines expr ';'  */
-#line 111 "Thompson.y"
+#line 126 "Thompson.y"
                                {    nfa_state_num=0; 
-                                    dumpNFA((yyvsp[-1].nval)); 
-                                    printf("----------\n"); 
+                                    dumpNFA((yyvsp[-1].nval));   // 输出到dot文件
                                     FILE_NUM++;
-                                    struct DFA* dfa = NFA2DFA((yyvsp[-1].nval));
-                                    dumpDFA(dfa);
+                                    struct DFA* dfa = NFA2DFA((yyvsp[-1].nval));  // 子集构造法
+                                    dumpDFA(dfa);  // 输出到dot文件
+                                    cleanSymbolTable();  // 清空符号表
+                                    printf("----------\n"); 
                                 }
-#line 1224 "Thompson.tab.c"
+#line 1240 "Thompson.tab.c"
     break;
 
   case 4: /* lines: lines QUIT  */
-#line 119 "Thompson.y"
+#line 135 "Thompson.y"
                             { exit(0); }
-#line 1230 "Thompson.tab.c"
+#line 1246 "Thompson.tab.c"
     break;
 
   case 6: /* expr: expr OR term_connect  */
-#line 122 "Thompson.y"
+#line 138 "Thompson.y"
                                      { (yyval.nval) = orNFA((yyvsp[-2].nval),(yyvsp[0].nval)); }
-#line 1236 "Thompson.tab.c"
+#line 1252 "Thompson.tab.c"
     break;
 
   case 7: /* expr: term_connect  */
-#line 123 "Thompson.y"
+#line 139 "Thompson.y"
                              { (yyval.nval) = (yyvsp[0].nval); }
-#line 1242 "Thompson.tab.c"
+#line 1258 "Thompson.tab.c"
     break;
 
   case 8: /* term_connect: term term_connect  */
-#line 125 "Thompson.y"
+#line 141 "Thompson.y"
                                           { (yyval.nval) = connectNFA((yyvsp[-1].nval),(yyvsp[0].nval)); }
-#line 1248 "Thompson.tab.c"
+#line 1264 "Thompson.tab.c"
     break;
 
   case 9: /* term_connect: term  */
-#line 126 "Thompson.y"
+#line 142 "Thompson.y"
                      { (yyval.nval) = (yyvsp[0].nval); }
-#line 1254 "Thompson.tab.c"
+#line 1270 "Thompson.tab.c"
     break;
 
   case 10: /* term: term CLOSURE  */
-#line 128 "Thompson.y"
+#line 144 "Thompson.y"
                              { (yyval.nval) = closureNFA((yyvsp[-1].nval)); }
-#line 1260 "Thompson.tab.c"
+#line 1276 "Thompson.tab.c"
     break;
 
   case 11: /* term: LBRACE expr RBRACE  */
-#line 129 "Thompson.y"
+#line 145 "Thompson.y"
                                    { (yyval.nval) = (yyvsp[-1].nval); }
-#line 1266 "Thompson.tab.c"
+#line 1282 "Thompson.tab.c"
     break;
 
   case 12: /* term: CHAR  */
-#line 130 "Thompson.y"
-                     { (yyval.nval) = newNFA((yyvsp[0].cval)); }
-#line 1272 "Thompson.tab.c"
+#line 146 "Thompson.y"
+                     {  (yyval.nval) = newNFA((yyvsp[0].cval)); 
+                        addSymbol((yyvsp[0].cval));  // 添加到符号表   
+                    }
+#line 1290 "Thompson.tab.c"
     break;
 
 
-#line 1276 "Thompson.tab.c"
+#line 1294 "Thompson.tab.c"
 
       default: break;
     }
@@ -1465,7 +1483,7 @@ yyreturnlab:
   return yyresult;
 }
 
-#line 134 "Thompson.y"
+#line 152 "Thompson.y"
 
 
 // programs section
@@ -1501,6 +1519,43 @@ int yylex()  // 词法分析器
         }
     }
 }
+
+// 操作符号表
+struct symbol* findSymbol(char c){
+    // 在符号表中查找一个符号
+    struct symbol *s;
+    for(s=symbolTable;s!=NULL;s=s->next)  // 遍历符号表
+        if(c==s->c){
+            return s;
+        }
+    return NULL;  // 没有找到
+}
+
+void addSymbol(char c){
+    // 向符号表中添加一个符号
+    struct symbol *s = findSymbol(c);
+    if(s!=NULL)  // 如果已经存在
+        return;
+    // 否则创建一个新的符号
+    s = malloc(sizeof(struct symbol));
+    s->c = c;
+    s->next = symbolTable;
+    symbolTable = s;
+    totalSymbolNum++;
+}
+
+void cleanSymbolTable(){
+    // 清空符号表
+    struct symbol *s;
+    for(int i=0;i<totalSymbolNum;i++){
+        s = symbolTable->next;
+        free(symbolTable);
+        symbolTable = s;
+    }
+    symbolTable = NULL;
+    totalSymbolNum = 0;
+}
+
 
 // 实现Thompson构造法，从正则表达式转NFA
 struct State* newState(int edgeNum){  // 辅助函数
@@ -1840,8 +1895,13 @@ struct DFA* NFA2DFA(struct NFA* nfa){  // 子集构造法
     
     // 遍历每个未标记状态
     while(queueFront!=NULL){
+        struct symbol *s = symbolTable;
         // 遍历每个字符
-        for(char c='a';c<='b';c++){  // TODO：创建字符表
+        for(int i=0;i<totalSymbolNum;i++){
+            // 从符号表中取出一个字符
+            char c = s->c;
+            s = s->next;
+
             // move
             struct State* DestBegin,*Dest=NULL;
             // C语言没有传引用，传指针的指针
@@ -1926,6 +1986,7 @@ void dumpDFA(struct DFA* dfa){  // 输出到dot文件
 
     fprintf(fp,"}\n");
     fclose(fp);
+    // TODO：释放DFA内存
 }
 
 

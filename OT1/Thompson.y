@@ -16,6 +16,12 @@ int yylex();
 extern int yyparse();
 FILE* yyin;
 void yyerror(const char* s);
+
+// 操作符号表
+struct symbol* findSymbol(char c);
+void addSymbol(char c);
+void cleanSymbolTable();
+
 // 实现Thompson构造法
 struct State* newState(int edgeNum);
 void addEdge(struct State* begin,struct State* end,char c);
@@ -37,6 +43,15 @@ void addDFAEdge(struct DFAState* begin,struct DFAState* end,char c);
 struct DFAState* isExist(struct DFAState* queueFront,int totalStateNum,struct DFAState* check);
 void dumpDFA(struct DFA* dfa);
 
+
+// 符号表
+struct symbol{
+    char c;
+    struct symbol *next;
+};
+// 头指针
+struct symbol *symbolTable = NULL;
+int totalSymbolNum = 0;  // 符号表中符号的数量
 
 #define none '$'  // 空串
 int FILE_NUM = 0;  // 一行一个文件
@@ -109,11 +124,12 @@ struct DFA{
 %%
 // 规则
 lines   :       lines expr ';' {    nfa_state_num=0; 
-                                    dumpNFA($2); 
-                                    printf("----------\n"); 
+                                    dumpNFA($2);   // 输出到dot文件
                                     FILE_NUM++;
-                                    struct DFA* dfa = NFA2DFA($2);
-                                    dumpDFA(dfa);
+                                    struct DFA* dfa = NFA2DFA($2);  // 子集构造法
+                                    dumpDFA(dfa);  // 输出到dot文件
+                                    cleanSymbolTable();  // 清空符号表
+                                    printf("----------\n"); 
                                 }
         |       lines ';'
         |       lines QUIT  { exit(0); }
@@ -127,7 +143,9 @@ term_connect    :       term term_connect { $$ = connectNFA($1,$2); }  // 连接
         ;
 term    :       term CLOSURE { $$ = closureNFA($1); }  // 闭包
         |       LBRACE expr RBRACE { $$ = $2; }
-        |       CHAR { $$ = newNFA($1); }  // 新建一个NFA
+        |       CHAR {  $$ = newNFA($1); 
+                        addSymbol($1);  // 添加到符号表   
+                    }  // 新建一个NFA
         ;
 
 
@@ -166,6 +184,43 @@ int yylex()  // 词法分析器
         }
     }
 }
+
+// 操作符号表
+struct symbol* findSymbol(char c){
+    // 在符号表中查找一个符号
+    struct symbol *s;
+    for(s=symbolTable;s!=NULL;s=s->next)  // 遍历符号表
+        if(c==s->c){
+            return s;
+        }
+    return NULL;  // 没有找到
+}
+
+void addSymbol(char c){
+    // 向符号表中添加一个符号
+    struct symbol *s = findSymbol(c);
+    if(s!=NULL)  // 如果已经存在
+        return;
+    // 否则创建一个新的符号
+    s = malloc(sizeof(struct symbol));
+    s->c = c;
+    s->next = symbolTable;
+    symbolTable = s;
+    totalSymbolNum++;
+}
+
+void cleanSymbolTable(){
+    // 清空符号表
+    struct symbol *s;
+    for(int i=0;i<totalSymbolNum;i++){
+        s = symbolTable->next;
+        free(symbolTable);
+        symbolTable = s;
+    }
+    symbolTable = NULL;
+    totalSymbolNum = 0;
+}
+
 
 // 实现Thompson构造法，从正则表达式转NFA
 struct State* newState(int edgeNum){  // 辅助函数
@@ -487,6 +542,7 @@ struct DFAState* isExist(struct DFAState* queueFront,int totalStateNum,struct DF
     return NULL;
 }
 
+// TODO：输epsilon会出问题
 struct DFA* NFA2DFA(struct NFA* nfa){  // 子集构造法
     int id = 0;
     struct DFA* dfa = (struct DFA*)malloc(sizeof(struct DFA));
@@ -505,8 +561,13 @@ struct DFA* NFA2DFA(struct NFA* nfa){  // 子集构造法
     
     // 遍历每个未标记状态
     while(queueFront!=NULL){
+        struct symbol *s = symbolTable;
         // 遍历每个字符
-        for(char c='a';c<='b';c++){  // TODO：创建字符表
+        for(int i=0;i<totalSymbolNum;i++){
+            // 从符号表中取出一个字符
+            char c = s->c;
+            s = s->next;
+
             // move
             struct State* DestBegin,*Dest=NULL;
             // C语言没有传引用，传指针的指针
@@ -591,6 +652,7 @@ void dumpDFA(struct DFA* dfa){  // 输出到dot文件
 
     fprintf(fp,"}\n");
     fclose(fp);
+    // TODO：释放DFA内存
 }
 
 
