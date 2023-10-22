@@ -1649,9 +1649,9 @@ void testSet(struct State* t){
 }
 
 int epsilonClosure(struct State* T_begin,struct State* T_end){  // 求闭包
-    bool* visited = (bool*)malloc(sizeof(bool)*nfa_state_num);  // 记录是否访问过
-    int num=1;
     // 从T出发，经过空串能到达的状态集合
+    bool* visited = (bool*)malloc(sizeof(bool)*nfa_state_num);  // 记录是否访问过
+    int num=1;  // 记录集合中状态的数量
     // 状态链接在state的第三条边上，链表构成集合
     struct State* queueFront,*queueRear;
     // 传入的T是一个集合
@@ -1675,20 +1675,89 @@ int epsilonClosure(struct State* T_begin,struct State* T_end){  // 求闭包
         // 出队（把队列头指向下一个）
         queueFront = queueFront->edgeOut[2].next;
     }
+    free(visited);
     // 返回的链表是有序的，因为我id就是这么给的
     return num;
 }
 
+struct State* move(struct State* T_begin,char c,int T_num,struct State** DestEnd){  // move
+    // 从T出发，经过c能到达的状态集合
+    bool* visited = (bool*)malloc(sizeof(bool)*nfa_state_num);  // 记录是否访问过
+    // 状态链接在state的第三条边上，链表构成集合
+    struct State* queueFront = T_begin,*DestBegin = NULL,*Dest;
+    // 遍历集合，每个状态执行一个动作
+    for(int i=0;i<T_num;i++)
+    {
+        // 遍历每个状态的出边
+        for(int j=0;j<queueFront->edgeNum;j++){
+            if(queueFront->edgeOut[j].c==c&&visited[queueFront->edgeOut[j].next->id]==false){  // 找到个符合的边
+                if(DestBegin==NULL){  // 第一个
+                    DestBegin = Dest = queueFront->edgeOut[j].next;
+                }
+                else{  // 不是第一个
+                    // 连接到队列尾
+                    Dest->edgeOut[2].next = queueFront->edgeOut[j].next;
+                    Dest = Dest->edgeOut[2].next;
+                }
+                Dest->edgeOut[2].next = NULL;  // 队列尾的下一个置空
+                visited[Dest->id] = true;  // 避免重复进
+            }
+        }
+        // 出队（把队列头指向下一个）
+        queueFront = queueFront->edgeOut[2].next;
+    }
+    free(visited);
+    // C语言不能传引用，所以用指针的指针
+    *DestEnd = Dest;
+    // TODO：有可能一个都没有
+    return DestBegin;
+}
+
 struct DFA* NFA2DFA(struct NFA* nfa){
+    int id = 0;
     struct DFA* dfa = (struct DFA*)malloc(sizeof(struct DFA));
     // 开始状态
     struct DFAState* start = (struct DFAState*)malloc(sizeof(struct DFAState));
     start->edgeNum = 0;
-    start->nfaStateNum = epsilonClosure(nfa->start,nfa->start);
+    start->nfaStateNum = epsilonClosure(nfa->start,nfa->start);  // 计算epsilon闭包
     start->nfaState = nfa->start;
-    start->id = 0;  // id直接编号
+    start->id = id++;  // id直接编号
     testSet(start->nfaState);
-     
+    // 初始化队列
+    struct DFAState* queueFront,*queueRear;
+    queueFront = queueRear = start;
+    // 遍历每个未标记状态
+    while(queueFront!=NULL){
+        // 遍历每个字符
+        for(char c='a';c<='a';c++){  // TODO：创建字符表
+            // move
+            struct State* DestBegin,*Dest=NULL;
+            // C语言没有传引用，传指针的指针
+            DestBegin = move(queueFront->nfaState, c, queueFront->nfaStateNum, &Dest);
+            if(DestBegin==NULL)  // 没有move出去
+                continue;
+            else{
+                // 计算epsilon闭包
+                printf("DestBegin: %d\n",DestBegin->id);
+                printf("Dest: %d\n",Dest->id);
+                int DestNum = epsilonClosure(DestBegin,Dest);
+                // 创建新状态
+                struct DFAState* DestState = (struct DFAState*)malloc(sizeof(struct DFAState));
+                DestState->edgeNum = 0;
+                DestState->nfaStateNum = DestNum;
+                DestState->nfaState = DestBegin;
+                //testSet(DestState->nfaState);
+                // TODO：判断是否存在，进而决定是否加入队列和id，还要给front添加edge！
+                
+                // TODO：下面是copilot生成↓，后面慢慢改
+                // 判断是否已经存在
+                
+            }
+        }
+        // 出队（把队列头指向下一个）
+        break;
+        //queueFront = queueFront->edgeOut[2].next;
+    }
 }
 
 

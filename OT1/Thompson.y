@@ -345,11 +345,11 @@ int epsilonClosure(struct State* T_begin,struct State* T_end){  // 求闭包
     return num;
 }
 
-struct State* move(struct State* T_begin,char c,int T_num,struct State* Dest){  // move
+struct State* move(struct State* T_begin,char c,int T_num,struct State** DestEnd){  // move
     // 从T出发，经过c能到达的状态集合
     bool* visited = (bool*)malloc(sizeof(bool)*nfa_state_num);  // 记录是否访问过
     // 状态链接在state的第三条边上，链表构成集合
-    struct State* queueFront = T_begin,*DestBegin = NULL;
+    struct State* queueFront = T_begin,*DestBegin = NULL,*Dest;
     // 遍历集合，每个状态执行一个动作
     for(int i=0;i<T_num;i++)
     {
@@ -372,6 +372,8 @@ struct State* move(struct State* T_begin,char c,int T_num,struct State* Dest){  
         queueFront = queueFront->edgeOut[2].next;
     }
     free(visited);
+    // C语言不能传引用，所以用指针的指针
+    *DestEnd = Dest;
     // TODO：有可能一个都没有
     return DestBegin;
 }
@@ -382,7 +384,7 @@ struct DFA* NFA2DFA(struct NFA* nfa){
     // 开始状态
     struct DFAState* start = (struct DFAState*)malloc(sizeof(struct DFAState));
     start->edgeNum = 0;
-    start->nfaStateNum = epsilonClosure(nfa->start,nfa->start);
+    start->nfaStateNum = epsilonClosure(nfa->start,nfa->start);  // 计算epsilon闭包
     start->nfaState = nfa->start;
     start->id = id++;  // id直接编号
     testSet(start->nfaState);
@@ -392,51 +394,34 @@ struct DFA* NFA2DFA(struct NFA* nfa){
     // 遍历每个未标记状态
     while(queueFront!=NULL){
         // 遍历每个字符
-        for(char c='a';c<='z';c++){  // TODO：创建字符表
+        for(char c='a';c<='a';c++){  // TODO：创建字符表
             // move
             struct State* DestBegin,*Dest=NULL;
-            DestBegin = move(queueFront->nfaState, c, queueFront->nfaStateNum, Dest);
+            // C语言没有传引用，传指针的指针
+            DestBegin = move(queueFront->nfaState, c, queueFront->nfaStateNum, &Dest);
             if(DestBegin==NULL)  // 没有move出去
                 continue;
             else{
                 // 计算epsilon闭包
+                printf("DestBegin: %d\n",DestBegin->id);
+                printf("Dest: %d\n",Dest->id);
                 int DestNum = epsilonClosure(DestBegin,Dest);
                 // 创建新状态
                 struct DFAState* DestState = (struct DFAState*)malloc(sizeof(struct DFAState));
                 DestState->edgeNum = 0;
                 DestState->nfaStateNum = DestNum;
                 DestState->nfaState = DestBegin;
-                // TODO：判断是否存在，进而决定是否加入队列和id，还有给front添加edge！
+                //testSet(DestState->nfaState);
+                // TODO：判断是否存在，进而决定是否加入队列和id，还要给front添加edge！
                 
-                // 下面是copilot生成↓，后面慢慢改
+                // TODO：下面是copilot生成↓，后面慢慢改
                 // 判断是否已经存在
-                struct DFAState* temp = dfa->start;
-                bool flag = false;
-                while(temp!=NULL){
-                    if(temp->nfaStateNum==Dest->nfaStateNum){
-                        flag = true;
-                        break;
-                    }
-                    temp = temp->edgeOut[2].next;
-                }
-                if(flag==false){  // 不存在
-                    // 连接到队列尾
-                    queueRear->edgeOut[queueRear->edgeNum].c = c;
-                    queueRear->edgeOut[queueRear->edgeNum++].next = Dest;
-                    queueRear = queueRear->edgeOut[queueRear->edgeNum-1].next;
-                    queueRear->edgeOut[2].next = NULL;  // 队列尾的下一个置空
-                }
-                else{  // 存在
-                    // 连接到队列尾
-                    queueRear->edgeOut[queueRear->edgeNum].c = c;
-                    queueRear->edgeOut[queueRear->edgeNum++].next = temp;
-                    queueRear = queueRear->edgeOut[queueRear->edgeNum-1].next;
-                    queueRear->edgeOut[2].next = NULL;  // 队列尾的下一个置空
-                }
+                
             }
         }
         // 出队（把队列头指向下一个）
-        queueFront = queueFront->edgeOut[2].next;
+        break;
+        //queueFront = queueFront->edgeOut[2].next;
     }
 }
 
