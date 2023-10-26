@@ -67,13 +67,13 @@
 
 
 /* First part of user prologue.  */
-#line 1 "Thompson.y"
+#line 1 "lexer.y"
 
 /*********************************************
 YACC file
 可以用C++写！！！
 1. 实现Thompson构造法，从正则表达式转NFA(finish date:2023/10/20)
-2. 实现子集构造法，从NFA转DFA(finish date:)
+2. 实现子集构造法，从NFA转DFA(finish date:2023/10/22)
 3. 实现DFA的最小化(finish date:)
 **********************************************/
 #include<stdio.h>
@@ -113,6 +113,12 @@ void addDFAEdge(struct DFAState* begin,struct DFAState* end,char c);
 struct DFAState* isExist(struct DFAState* queueFront,int totalStateNum,struct DFAState* check);
 void dumpDFA(struct DFA* dfa);
 
+// 最小化DFA
+int initGroupSet(struct DFAState* groupSet,struct DFAState* queueFront);
+void testGroup(struct DFAState* groupSet,int groupNum);
+struct DFA* minimizeDFA(struct DFA* dfa);
+
+
 
 // 符号表
 struct symbol{
@@ -126,6 +132,7 @@ int totalSymbolNum = 0;  // 符号表中符号的数量
 #define none '$'  // 空串
 int FILE_NUM = 0;  // 一行一个文件
 
+// NFA
 int nfa_accept_id;  // nfa接收状态的id
 int nfa_state_num;  // nfa总状态数
 
@@ -145,6 +152,7 @@ struct NFA{  // NFA由一连串的状态和边组成
     struct State* end;  // 结束状态
 };
 
+// DFA
 struct DFAEdge{  // DFA的一条边
     char c;  // 边上的字符
     struct DFAState* next;  // 边指向的下一个状态
@@ -166,7 +174,7 @@ struct DFA{
 
 
 
-#line 170 "Thompson.tab.c"
+#line 178 "lexer.tab.c"
 
 # ifndef YY_CAST
 #  ifdef __cplusplus
@@ -234,12 +242,12 @@ extern int yydebug;
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 100 "Thompson.y"
+#line 108 "lexer.y"
 
     char cval;  // 字符
     struct NFA* nval;  // 控制NFA
 
-#line 243 "Thompson.tab.c"
+#line 251 "lexer.tab.c"
 
 };
 typedef union YYSTYPE YYSTYPE;
@@ -661,8 +669,8 @@ static const yytype_int8 yytranslate[] =
 /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_uint8 yyrline[] =
 {
-       0,   126,   126,   134,   135,   136,   138,   139,   141,   142,
-     144,   145,   146
+       0,   134,   134,   146,   147,   148,   150,   151,   153,   154,
+     156,   157,   158
 };
 #endif
 
@@ -1227,70 +1235,74 @@ yyreduce:
   switch (yyn)
     {
   case 2: /* lines: lines expr ';'  */
-#line 126 "Thompson.y"
+#line 134 "lexer.y"
                                {    nfa_state_num=0; 
                                     dumpNFA((yyvsp[-1].nval));   // 输出到dot文件
+                                    printf("----dump NFA----\n");
                                     FILE_NUM++;
                                     struct DFA* dfa = NFA2DFA((yyvsp[-1].nval));  // 子集构造法
                                     dumpDFA(dfa);  // 输出到dot文件
+                                    printf("----dump DFA----\n");
+                                    minimizeDFA(dfa);  // 最小化DFA
+                                    printf("----minimize DFA----\n");
                                     cleanSymbolTable();  // 清空符号表
-                                    printf("----------\n"); 
+                                    printf("------------------\n"); 
                                 }
-#line 1240 "Thompson.tab.c"
+#line 1252 "lexer.tab.c"
     break;
 
   case 4: /* lines: lines QUIT  */
-#line 135 "Thompson.y"
+#line 147 "lexer.y"
                             { exit(0); }
-#line 1246 "Thompson.tab.c"
+#line 1258 "lexer.tab.c"
     break;
 
   case 6: /* expr: expr OR term_connect  */
-#line 138 "Thompson.y"
+#line 150 "lexer.y"
                                      { (yyval.nval) = orNFA((yyvsp[-2].nval),(yyvsp[0].nval)); }
-#line 1252 "Thompson.tab.c"
+#line 1264 "lexer.tab.c"
     break;
 
   case 7: /* expr: term_connect  */
-#line 139 "Thompson.y"
+#line 151 "lexer.y"
                              { (yyval.nval) = (yyvsp[0].nval); }
-#line 1258 "Thompson.tab.c"
+#line 1270 "lexer.tab.c"
     break;
 
   case 8: /* term_connect: term term_connect  */
-#line 141 "Thompson.y"
+#line 153 "lexer.y"
                                           { (yyval.nval) = connectNFA((yyvsp[-1].nval),(yyvsp[0].nval)); }
-#line 1264 "Thompson.tab.c"
+#line 1276 "lexer.tab.c"
     break;
 
   case 9: /* term_connect: term  */
-#line 142 "Thompson.y"
+#line 154 "lexer.y"
                      { (yyval.nval) = (yyvsp[0].nval); }
-#line 1270 "Thompson.tab.c"
+#line 1282 "lexer.tab.c"
     break;
 
   case 10: /* term: term CLOSURE  */
-#line 144 "Thompson.y"
+#line 156 "lexer.y"
                              { (yyval.nval) = closureNFA((yyvsp[-1].nval)); }
-#line 1276 "Thompson.tab.c"
+#line 1288 "lexer.tab.c"
     break;
 
   case 11: /* term: LBRACE expr RBRACE  */
-#line 145 "Thompson.y"
+#line 157 "lexer.y"
                                    { (yyval.nval) = (yyvsp[-1].nval); }
-#line 1282 "Thompson.tab.c"
+#line 1294 "lexer.tab.c"
     break;
 
   case 12: /* term: CHAR  */
-#line 146 "Thompson.y"
+#line 158 "lexer.y"
                      {  (yyval.nval) = newNFA((yyvsp[0].cval)); 
                         addSymbol((yyvsp[0].cval));  // 添加到符号表   
                     }
-#line 1290 "Thompson.tab.c"
+#line 1302 "lexer.tab.c"
     break;
 
 
-#line 1294 "Thompson.tab.c"
+#line 1306 "lexer.tab.c"
 
       default: break;
     }
@@ -1483,7 +1495,7 @@ yyreturnlab:
   return yyresult;
 }
 
-#line 152 "Thompson.y"
+#line 164 "lexer.y"
 
 
 // programs section
@@ -1519,6 +1531,7 @@ int yylex()  // 词法分析器
         }
     }
 }
+
 
 // 操作符号表
 struct symbol* findSymbol(char c){
@@ -1877,7 +1890,6 @@ struct DFAState* isExist(struct DFAState* queueFront,int totalStateNum,struct DF
     return NULL;
 }
 
-// TODO：输epsilon会出问题
 struct DFA* NFA2DFA(struct NFA* nfa){  // 子集构造法
     int id = 0;
     struct DFA* dfa = (struct DFA*)malloc(sizeof(struct DFA));
@@ -1990,6 +2002,83 @@ void dumpDFA(struct DFA* dfa){  // 输出到dot文件
     // TODO：释放DFA内存
 }
 
+
+// 最小化DFA
+int initGroupSet(struct DFAState* groupSet,struct DFAState* queueFront){  // 辅助函数
+    //printf("initGroupSet: \n");
+    // 根据终态/非终态，初始化分组集合
+    // 同一组内用第一条边串接
+    int groupNum = 0;
+    bool isHaveAcceptGroup = false;  // 是否有终态分组
+    bool isHaveNonAcceptGroup = false;  // 是否有非终态分组
+    struct DFAState* acceptGroup,*nonAcceptGroup;
+    while(queueFront!=NULL){  // 队列不为空
+        struct DFAState* temp = queueFront->edgeOut->next;  // 保存下一个
+        if(queueFront->isAccept){  // 终态
+            if(isHaveAcceptGroup==false){  // 没有终态分组
+                isHaveAcceptGroup = true;
+                addDFAEdge(groupSet,queueFront,none);  // 添加边连接分组
+                acceptGroup = queueFront;
+                groupNum++;
+            }
+            else{  // 有终态分组
+                // 将其连接到对应分组后面
+                acceptGroup->edgeOut->next = queueFront;
+                acceptGroup = queueFront;
+            }
+            acceptGroup->edgeOut->next = NULL;  // 队尾置空
+        }
+        else{  // 非终态
+            if(isHaveNonAcceptGroup==false){  // 没有非终态分组
+                isHaveNonAcceptGroup = true;
+                addDFAEdge(groupSet,queueFront,none);  // 添加边连接分组
+                nonAcceptGroup = queueFront;
+                groupNum++;
+            }
+            else{  // 有非终态分组
+                // 将其连接到对应分组后面
+                nonAcceptGroup->edgeOut->next = queueFront;
+                nonAcceptGroup = queueFront;
+            }
+            nonAcceptGroup->edgeOut->next = NULL;  // 队尾置空
+        }
+        // 出队（把队列头指向下一个）
+        queueFront = temp;
+    }
+    return groupNum;
+}
+
+void testGroup(struct DFAState* groupSet,int groupNum){
+    printf("testGroup: \n");
+    struct DFAEdge* groupPtr = groupSet->edgeOut->nextEdge;  // 第一条边没有用
+    for(int i=0;i<groupNum;i++){
+        struct DFAState* queueFront = groupPtr->next;  // 一组的队列头
+        while(queueFront!=NULL){  // 队列不为空
+            printf("%d ",queueFront->id);
+            // 出队（把队列头指向下一个）
+            queueFront = queueFront->edgeOut->next;
+        }
+        printf("\n");
+        // 下一个分组
+        groupPtr = groupPtr->nextEdge;
+    }
+}
+
+struct DFA* minimizeDFA(struct DFA* dfa){
+    struct DFA* minDFA = (struct DFA*)malloc(sizeof(struct DFA));
+    struct DFAState* groupSet = newDFAState(0);  // 分组集合，不使用第一条边
+    // 初始化分组集合，分为终态和非终态
+    int groupNum = initGroupSet(groupSet,dfa->start), temp = 0;  // 分组数量
+    testGroup(groupSet,groupNum);
+
+    // 循环构建分组
+
+
+    // 构建分组之间的边
+
+    
+    return minDFA;
+}
 
 int main(void)
 {

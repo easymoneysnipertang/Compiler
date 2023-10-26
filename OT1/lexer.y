@@ -43,6 +43,12 @@ void addDFAEdge(struct DFAState* begin,struct DFAState* end,char c);
 struct DFAState* isExist(struct DFAState* queueFront,int totalStateNum,struct DFAState* check);
 void dumpDFA(struct DFA* dfa);
 
+// 最小化DFA
+int initGroupSet(struct DFAState* groupSet,struct DFAState* queueFront);
+void testGroup(struct DFAState* groupSet,int groupNum);
+struct DFA* minimizeDFA(struct DFA* dfa);
+
+
 
 // 符号表
 struct symbol{
@@ -127,11 +133,15 @@ struct DFA{
 // 规则
 lines   :       lines expr ';' {    nfa_state_num=0; 
                                     dumpNFA($2);   // 输出到dot文件
+                                    printf("----dump NFA----\n");
                                     FILE_NUM++;
                                     struct DFA* dfa = NFA2DFA($2);  // 子集构造法
                                     dumpDFA(dfa);  // 输出到dot文件
+                                    printf("----dump DFA----\n");
+                                    minimizeDFA(dfa);  // 最小化DFA
+                                    printf("----minimize DFA----\n");
                                     cleanSymbolTable();  // 清空符号表
-                                    printf("----------\n"); 
+                                    printf("------------------\n"); 
                                 }
         |       lines ';'
         |       lines QUIT  { exit(0); }
@@ -659,100 +669,75 @@ void dumpDFA(struct DFA* dfa){  // 输出到dot文件
 
 
 // 最小化DFA
-void initGroupSet(struct DFAState* groupSet,struct DFAState* queueFront){  // 辅助函数
+int initGroupSet(struct DFAState* groupSet,struct DFAState* queueFront){  // 辅助函数
+    //printf("initGroupSet: \n");
     // 根据终态/非终态，初始化分组集合
     // 同一组内用第一条边串接
+    int groupNum = 0;
     bool isHaveAcceptGroup = false;  // 是否有终态分组
     bool isHaveNonAcceptGroup = false;  // 是否有非终态分组
     struct DFAState* acceptGroup,*nonAcceptGroup;
     while(queueFront!=NULL){  // 队列不为空
+        struct DFAState* temp = queueFront->edgeOut->next;  // 保存下一个
         if(queueFront->isAccept){  // 终态
             if(isHaveAcceptGroup==false){  // 没有终态分组
                 isHaveAcceptGroup = true;
                 addDFAEdge(groupSet,queueFront,none);  // 添加边连接分组
                 acceptGroup = queueFront;
+                groupNum++;
             }
             else{  // 有终态分组
                 // 将其连接到对应分组后面
-                DFAEdge* temp = acceptGroup->edgeOut->next;
                 acceptGroup->edgeOut->next = queueFront;
-                queueFront->edgeOut->next = temp;
+                acceptGroup = queueFront;
             }
+            acceptGroup->edgeOut->next = NULL;  // 队尾置空
         }
         else{  // 非终态
             if(isHaveNonAcceptGroup==false){  // 没有非终态分组
                 isHaveNonAcceptGroup = true;
                 addDFAEdge(groupSet,queueFront,none);  // 添加边连接分组
                 nonAcceptGroup = queueFront;
+                groupNum++;
             }
             else{  // 有非终态分组
                 // 将其连接到对应分组后面
-                DFAEdge* temp = nonAcceptGroup->edgeOut->next;
                 nonAcceptGroup->edgeOut->next = queueFront;
-                queueFront->edgeOut->next = temp;
+                nonAcceptGroup = queueFront;
             }
+            nonAcceptGroup->edgeOut->next = NULL;  // 队尾置空
         }
         // 出队（把队列头指向下一个）
-        queueFront = queueFront->edgeOut->next;
+        queueFront = temp;
+    }
+    return groupNum;
+}
+
+void testGroup(struct DFAState* groupSet,int groupNum){
+    printf("testGroup: \n");
+    struct DFAEdge* groupPtr = groupSet->edgeOut->nextEdge;  // 第一条边没有用
+    for(int i=0;i<groupNum;i++){
+        struct DFAState* queueFront = groupPtr->next;  // 一组的队列头
+        while(queueFront!=NULL){  // 队列不为空
+            printf("%d ",queueFront->id);
+            // 出队（把队列头指向下一个）
+            queueFront = queueFront->edgeOut->next;
+        }
+        printf("\n");
+        // 下一个分组
+        groupPtr = groupPtr->nextEdge;
     }
 }
 
 struct DFA* minimizeDFA(struct DFA* dfa){
     struct DFA* minDFA = (struct DFA*)malloc(sizeof(struct DFA));
     struct DFAState* groupSet = newDFAState(0);  // 分组集合，不使用第一条边
-    initGroupSet(groupSet,dfa->start);  // 初始化分组集合，分为终态和非终态
-    int groupNum = 2,temp = 0;  // 分组数量，初始为2，终态和非终态
+    // 初始化分组集合，分为终态和非终态
+    int groupNum = initGroupSet(groupSet,dfa->start), temp = 0;  // 分组数量
+    testGroup(groupSet,groupNum);
 
     // 循环构建分组
-    while(groupNum!=temp){  // 如果前后两次分组没变，说明已经收敛
-        temp = groupNum;
-        struct DFAEdge* groupPtr = groupSet->edgeOut->nextEdge;  // 第一条边没有用
-        for(int i=0;i<groupNum;i++){  // 试探当前每一个分组是否还能够再细分
-            struct DFAState* queueFront = groupPtr->next;  // 一组的队列头
-            while(queueFront!=NULL){  // 队列不为空
-                // TODO：以下为copilot生成，后面来检查↓
 
-                struct DFAState* queueRear = queueFront->edgeOut->next;  // 一组的队列尾
-                struct DFAState* queueTemp = queueFront->edgeOut->next;  // 一组的队列头
-                while(queueRear!=NULL){  // 遍历一组
-                    // 判断是否在同一组
-                    bool isSameGroup = true;
-                    for(int j=0;j<groupNum;j++){  // 遍历每一个分组
-                        struct DFAState* groupFront = groupSet->edgeOut->next;  // 一组的队列头
-                        while(groupFront!=NULL){  // 队列不为空
-                            if(groupFront->id==queueRear->id){  // 在同一组
-                                isSameGroup = false;
-                                break;
-                            }
-                            // 出队（把队列头指向下一个）
-                            groupFront = groupFront->edgeOut->next;
-                        }
-                        if(isSameGroup==false)
-                            break;
-                    }
-                    if(isSameGroup==false){  // 不在同一组
-                        // 从当前分组中删除
-                        queueTemp->edgeOut->next = queueRear->edgeOut->next;
-                        // 添加到新的分组
-                        DFAEdge* temp = groupPtr->next->edgeOut->next;
-                        groupPtr->next->edgeOut->next = queueRear;
-                        queueRear->edgeOut->next = temp;
-                        // 出队（把队列头指向下一个）
-                        queueRear = queueTemp->edgeOut->next;
-                    }
-                    else{  // 在同一组
-                        // 出队（把队列头指向下一个）
-                        queueTemp = queueRear;
-                        queueRear = queueRear->edgeOut->next;
-                    }
-                }
-                // 出队（把队列头指向下一个）
-                queueFront = queueFront->edgeOut->next;
-            }
-            // 下一个分组
-            groupPtr = groupPtr->nextEdge;
-        }
-    }
 
     // 构建分组之间的边
 
