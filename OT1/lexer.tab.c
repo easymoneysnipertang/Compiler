@@ -116,8 +116,11 @@ void dumpDFA(struct DFA* dfa);
 // 最小化DFA
 int initGroupSet(struct DFAState* groupSet,struct DFAState* queueFront);
 void testGroup(struct DFAState* groupSet,int groupNum);
+int makeAMove(struct DFAState* s,char c);
 int divideGroup(struct DFAState* groupSet,struct DFAState* groupPtr,int nowGroupNum);
+struct DFAState* getTheGroup(struct DFAState* start,int groupNum,int groupLabel);
 struct DFA* minimizeDFA(struct DFA* dfa);
+void dumpMinDFA(struct DFA* dfa);
 
 
 
@@ -175,7 +178,7 @@ struct DFA{
 
 
 
-#line 179 "lexer.tab.c"
+#line 182 "lexer.tab.c"
 
 # ifndef YY_CAST
 #  ifdef __cplusplus
@@ -243,12 +246,12 @@ extern int yydebug;
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 109 "lexer.y"
+#line 112 "lexer.y"
 
     char cval;  // 字符
     struct NFA* nval;  // 控制NFA
 
-#line 252 "lexer.tab.c"
+#line 255 "lexer.tab.c"
 
 };
 typedef union YYSTYPE YYSTYPE;
@@ -670,8 +673,8 @@ static const yytype_int8 yytranslate[] =
 /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_uint8 yyrline[] =
 {
-       0,   135,   135,   147,   148,   149,   151,   152,   154,   155,
-     157,   158,   159
+       0,   138,   138,   154,   155,   156,   158,   159,   161,   162,
+     164,   165,   166
 };
 #endif
 
@@ -1236,74 +1239,78 @@ yyreduce:
   switch (yyn)
     {
   case 2: /* lines: lines expr ';'  */
-#line 135 "lexer.y"
+#line 138 "lexer.y"
                                {    nfa_state_num=0; 
                                     dumpNFA((yyvsp[-1].nval));   // 输出到dot文件
                                     printf("----dump NFA----\n");
-                                    FILE_NUM++;
+                                    
                                     struct DFA* dfa = NFA2DFA((yyvsp[-1].nval));  // 子集构造法
                                     dumpDFA(dfa);  // 输出到dot文件
                                     printf("----dump DFA----\n");
-                                    minimizeDFA(dfa);  // 最小化DFA
+
+                                    struct DFA* min_dfa = minimizeDFA(dfa);  // 最小化DFA
+                                    dumpMinDFA(min_dfa);  // 输出到dot文件
                                     printf("----minimize DFA----\n");
+
                                     cleanSymbolTable();  // 清空符号表
+                                    FILE_NUM++;
                                     printf("------------------\n"); 
                                 }
-#line 1253 "lexer.tab.c"
+#line 1260 "lexer.tab.c"
     break;
 
   case 4: /* lines: lines QUIT  */
-#line 148 "lexer.y"
+#line 155 "lexer.y"
                             { exit(0); }
-#line 1259 "lexer.tab.c"
+#line 1266 "lexer.tab.c"
     break;
 
   case 6: /* expr: expr OR term_connect  */
-#line 151 "lexer.y"
+#line 158 "lexer.y"
                                      { (yyval.nval) = orNFA((yyvsp[-2].nval),(yyvsp[0].nval)); }
-#line 1265 "lexer.tab.c"
+#line 1272 "lexer.tab.c"
     break;
 
   case 7: /* expr: term_connect  */
-#line 152 "lexer.y"
+#line 159 "lexer.y"
                              { (yyval.nval) = (yyvsp[0].nval); }
-#line 1271 "lexer.tab.c"
+#line 1278 "lexer.tab.c"
     break;
 
   case 8: /* term_connect: term term_connect  */
-#line 154 "lexer.y"
+#line 161 "lexer.y"
                                           { (yyval.nval) = connectNFA((yyvsp[-1].nval),(yyvsp[0].nval)); }
-#line 1277 "lexer.tab.c"
+#line 1284 "lexer.tab.c"
     break;
 
   case 9: /* term_connect: term  */
-#line 155 "lexer.y"
+#line 162 "lexer.y"
                      { (yyval.nval) = (yyvsp[0].nval); }
-#line 1283 "lexer.tab.c"
+#line 1290 "lexer.tab.c"
     break;
 
   case 10: /* term: term CLOSURE  */
-#line 157 "lexer.y"
+#line 164 "lexer.y"
                              { (yyval.nval) = closureNFA((yyvsp[-1].nval)); }
-#line 1289 "lexer.tab.c"
+#line 1296 "lexer.tab.c"
     break;
 
   case 11: /* term: LBRACE expr RBRACE  */
-#line 158 "lexer.y"
+#line 165 "lexer.y"
                                    { (yyval.nval) = (yyvsp[-1].nval); }
-#line 1295 "lexer.tab.c"
+#line 1302 "lexer.tab.c"
     break;
 
   case 12: /* term: CHAR  */
-#line 159 "lexer.y"
+#line 166 "lexer.y"
                      {  (yyval.nval) = newNFA((yyvsp[0].cval)); 
                         addSymbol((yyvsp[0].cval));  // 添加到符号表   
                     }
-#line 1303 "lexer.tab.c"
+#line 1310 "lexer.tab.c"
     break;
 
 
-#line 1307 "lexer.tab.c"
+#line 1314 "lexer.tab.c"
 
       default: break;
     }
@@ -1496,7 +1503,7 @@ yyreturnlab:
   return yyresult;
 }
 
-#line 165 "lexer.y"
+#line 172 "lexer.y"
 
 
 // programs section
@@ -1971,7 +1978,7 @@ struct DFA* NFA2DFA(struct NFA* nfa){  // 子集构造法
 
 void dumpDFA(struct DFA* dfa){  // 输出到dot文件
     char filename[20];
-    sprintf(filename,"DFA%d.dot",FILE_NUM-1);
+    sprintf(filename,"DFA%d.dot",FILE_NUM);
     FILE *fp = fopen(filename, "w");
     if (fp == NULL){
         printf("error opening file\n");
@@ -2000,7 +2007,6 @@ void dumpDFA(struct DFA* dfa){  // 输出到dot文件
 
     fprintf(fp,"}\n");
     fclose(fp);
-    // TODO：释放DFA内存
 }
 
 
@@ -2072,9 +2078,30 @@ void testGroup(struct DFAState* groupSet,int groupNum){  // 辅助函数，测�
     }
 }
 
+int makeAMove(struct DFAState* s,char c){  // 辅助函数，返回下一个状态的分组标签
+    struct DFAEdge* e = s->edgeOut->nextEdge;  // 第一条边没有用
+    // 没有边出去算死状态
+    for(int i=1;i<s->edgeNum;i++){
+        if(e->c==c)
+            return e->next->nfaStateNum;
+    }
+    return -1;
+}
+
 bool isInTheSameGroup(struct DFAState* this,struct DFAState* next){  // 辅助函数
     // 判断两个状态是否在同一组
-    
+    struct symbol *s = symbolTable;
+    // 遍历每个字符
+    for(int i=0;i<totalSymbolNum;i++){
+        // 取出一个字符
+        char c = s->c;
+        s = s->next;
+        // 比较两个状态到达的终点是否是同一分组
+        int thisGroup = makeAMove(this,c);
+        int nextGroup = makeAMove(next,c);
+        if(thisGroup!=nextGroup)
+            return false;
+    }
     return true;
 }
 
@@ -2085,9 +2112,8 @@ int divideGroup(struct DFAState* groupSet,struct DFAState* groupPtr,int nowGroup
     while(nextGroup!=NULL){
         thisGroup = nextGroup;
         nextGroup = NULL;  // 待分组集合
-        struct DFAState* nextGroupEntry = thisGroup->edgeOut->next;  // 看能不能拿出元素到下一组
-        thisGroup->edgeOut->next = NULL;  // 队尾置空
-        
+
+        struct DFAState* nextGroupEntry = thisGroup;  // 从thisGroup划分出nextGroupEntry到待分组集合
         while(nextGroupEntry!=NULL){
             struct DFAState* temp = nextGroupEntry->edgeOut->next;  // 保存下一个
             if(isInTheSameGroup(thisGroup,nextGroupEntry)){  // 在同一组
@@ -2119,13 +2145,21 @@ int divideGroup(struct DFAState* groupSet,struct DFAState* groupPtr,int nowGroup
             addDFAEdge(groupSet,thisGroup,none);
         }
     }
-
-
     return nowGroupNum;
+}
+
+struct DFAState* getTheGroup(struct DFAState* start,int groupNum,int groupLabel){  // 辅助函数
+    // 根据分组标签，找到对应的分组
+    for(int i=0;i<groupNum;i++){
+        if(start->nfaStateNum==groupLabel)
+            return start;
+        start = start->edgeOut->next;
+    }
 }
 
 struct DFA* minimizeDFA(struct DFA* dfa){
     struct DFA* minDFA = (struct DFA*)malloc(sizeof(struct DFA));
+
     struct DFAState* groupSet = newDFAState(0);  // 分组集合，不使用第一条边
     // 初始化分组集合，分为终态和非终态
     int groupNum = initGroupSet(groupSet,dfa->start), temp = 0;  // 分组数量
@@ -2140,12 +2174,116 @@ struct DFA* minimizeDFA(struct DFA* dfa){
             groupNum = divideGroup(groupSet,queueFront,groupNum);  // 组内划分
         }
     }
-    testGroup(groupSet,groupNum);
-    // 构建分组之间的边
+    //testGroup(groupSet,groupNum);
 
+    // 新建DFA状态，由minDFA连接
+    struct DFAEdge* groupPtr = groupSet->edgeOut->nextEdge;  // 第一条边没有用
+    struct DFAState* queueFront,*queueRear;
+    for(int i=0;i<groupNum;i++){
+        queueFront = groupPtr->next;  // 一组的队列头
+        struct DFAState* newState = newDFAState(0);  // 新建DFA状态
+        newState->id = i;  // id
+        newState->isAccept = queueFront->isAccept;  // 是否是接收状态
+        newState->nfaStateNum = queueFront->nfaStateNum;  // 分组标签
+        // 添加到minDFA
+        if(i==0){
+            minDFA->start = newState;
+        }
+        else{
+            queueRear->edgeOut->next = newState;
+        }
+        queueRear = newState;
+        queueRear->edgeOut->next = NULL;  // 队尾置空
+        // 下一组
+        groupPtr = groupPtr->nextEdge;
+    }
+
+    // 构建新状态之间的边
+    groupPtr = groupSet->edgeOut->nextEdge;  // 第一条边没有用
+    for(int i=0;i<groupNum;i++){
+        queueFront = groupPtr->next;  // 一组的队列头
+        struct symbol *s = symbolTable;
+        // 遍历每个字符
+        for(int j=0;j<totalSymbolNum;j++){
+            // 取出一个字符
+            char c = s->c;
+            s = s->next;
+            // 求出下一个状态的分组标签
+            int nextGroupLabel = makeAMove(queueFront,c);
+
+            // 根据分组标签找到对应的分组
+            struct DFAState* thisGroup = getTheGroup(minDFA->start,groupNum,queueFront->nfaStateNum);
+            struct DFAState* nextGroup = getTheGroup(minDFA->start,groupNum,nextGroupLabel);
+            // 添加边
+            addDFAEdge(thisGroup,nextGroup,c);
+        }
+        // 出队（把队列头指向下一个）
+        groupPtr = groupPtr->nextEdge;
+    }
+
+    // 释放原DFA内存
+    struct DFAState* freelist;
+    struct DFAEdge* freeEdge;
+    groupPtr = groupSet->edgeOut->nextEdge;  // 挨个释放每一组
+    for(int i=0;i<groupNum;i++){
+        queueFront = groupPtr->next;  // 一组的队列头
+        while(queueFront!=NULL){  // 释放一组的每个状态
+            freelist = queueFront;
+            queueFront = queueFront->edgeOut->next;
+            for(int j=0;j<freelist->edgeNum;j++){  // 释放每条边
+                freeEdge = freelist->edgeOut;
+                freelist->edgeOut = freelist->edgeOut->nextEdge;
+                free(freeEdge);
+            }
+            free(freelist);
+        }
+        // 下一组
+        groupPtr = groupPtr->nextEdge;
+    }
+    // 释放分组集合
+    for(int i=0;i<groupSet->edgeNum;i++){
+        freeEdge = groupSet->edgeOut;
+        groupSet->edgeOut = groupSet->edgeOut->nextEdge;
+        free(freeEdge);
+    }
+    free(groupSet);
     
     return minDFA;
 }
+
+void dumpMinDFA(struct DFA* dfa){  // 输出到dot文件
+    char filename[20];
+    sprintf(filename,"minDFA%d.dot",FILE_NUM);
+    FILE *fp = fopen(filename, "w");
+    if (fp == NULL){
+        printf("error opening file\n");
+        exit(-1);
+    }
+    fprintf(fp,"digraph G {\n");
+
+    struct DFAState* queueFront;
+    struct DFAEdge* edgePtr;
+    // 初始化队列
+    queueFront = dfa->start;
+
+    while(queueFront!=NULL){  // 队列不为空
+        edgePtr = queueFront->edgeOut->nextEdge;  // 第一条边负责串接队列
+        for(int i=1;i<queueFront->edgeNum;i++){  // BFS遍历出边
+            // 打印状态图
+            fprintf(fp,"\t%d -> %d [label=\"%c\"];\n",queueFront->id,edgePtr->next->id,edgePtr->c);
+            edgePtr = edgePtr->nextEdge;
+        }
+        // 打印接收状态
+        if(queueFront->isAccept)
+            fprintf(fp,"\t%d [shape=doublecircle];\n",queueFront->id);
+        // 出队（把队列头指向下一个）
+        queueFront = queueFront->edgeOut->next;
+    }
+
+    fprintf(fp,"}\n");
+    fclose(fp);
+}
+
 
 int main(void)
 {
