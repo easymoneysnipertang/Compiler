@@ -116,6 +116,7 @@ void dumpDFA(struct DFA* dfa);
 // 最小化DFA
 int initGroupSet(struct DFAState* groupSet,struct DFAState* queueFront);
 void testGroup(struct DFAState* groupSet,int groupNum);
+int divideGroup(struct DFAState* groupSet,struct DFAState* groupPtr,int nowGroupNum);
 struct DFA* minimizeDFA(struct DFA* dfa);
 
 
@@ -161,7 +162,7 @@ struct DFAEdge{  // DFA的一条边
 struct DFAState{  // DFA的一个状态
     int id;  // 状态编号
     struct State* nfaState;  // 对应的NFA状态
-    int nfaStateNum;  // 对应的NFA状态的数量
+    int nfaStateNum;  // 对应的NFA状态的数量，最小化的时候复用，作为分组标签
     struct DFAEdge* edgeOut;  // 状态的出边，是一个链表，第一条边负责串接队列
     int edgeNum;  // 出边的数量
     bool isAccept;  // 是否是接收状态
@@ -174,7 +175,7 @@ struct DFA{
 
 
 
-#line 178 "lexer.tab.c"
+#line 179 "lexer.tab.c"
 
 # ifndef YY_CAST
 #  ifdef __cplusplus
@@ -242,12 +243,12 @@ extern int yydebug;
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 108 "lexer.y"
+#line 109 "lexer.y"
 
     char cval;  // 字符
     struct NFA* nval;  // 控制NFA
 
-#line 251 "lexer.tab.c"
+#line 252 "lexer.tab.c"
 
 };
 typedef union YYSTYPE YYSTYPE;
@@ -669,8 +670,8 @@ static const yytype_int8 yytranslate[] =
 /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_uint8 yyrline[] =
 {
-       0,   134,   134,   146,   147,   148,   150,   151,   153,   154,
-     156,   157,   158
+       0,   135,   135,   147,   148,   149,   151,   152,   154,   155,
+     157,   158,   159
 };
 #endif
 
@@ -1235,7 +1236,7 @@ yyreduce:
   switch (yyn)
     {
   case 2: /* lines: lines expr ';'  */
-#line 134 "lexer.y"
+#line 135 "lexer.y"
                                {    nfa_state_num=0; 
                                     dumpNFA((yyvsp[-1].nval));   // 输出到dot文件
                                     printf("----dump NFA----\n");
@@ -1248,61 +1249,61 @@ yyreduce:
                                     cleanSymbolTable();  // 清空符号表
                                     printf("------------------\n"); 
                                 }
-#line 1252 "lexer.tab.c"
+#line 1253 "lexer.tab.c"
     break;
 
   case 4: /* lines: lines QUIT  */
-#line 147 "lexer.y"
+#line 148 "lexer.y"
                             { exit(0); }
-#line 1258 "lexer.tab.c"
+#line 1259 "lexer.tab.c"
     break;
 
   case 6: /* expr: expr OR term_connect  */
-#line 150 "lexer.y"
+#line 151 "lexer.y"
                                      { (yyval.nval) = orNFA((yyvsp[-2].nval),(yyvsp[0].nval)); }
-#line 1264 "lexer.tab.c"
+#line 1265 "lexer.tab.c"
     break;
 
   case 7: /* expr: term_connect  */
-#line 151 "lexer.y"
+#line 152 "lexer.y"
                              { (yyval.nval) = (yyvsp[0].nval); }
-#line 1270 "lexer.tab.c"
+#line 1271 "lexer.tab.c"
     break;
 
   case 8: /* term_connect: term term_connect  */
-#line 153 "lexer.y"
+#line 154 "lexer.y"
                                           { (yyval.nval) = connectNFA((yyvsp[-1].nval),(yyvsp[0].nval)); }
-#line 1276 "lexer.tab.c"
+#line 1277 "lexer.tab.c"
     break;
 
   case 9: /* term_connect: term  */
-#line 154 "lexer.y"
+#line 155 "lexer.y"
                      { (yyval.nval) = (yyvsp[0].nval); }
-#line 1282 "lexer.tab.c"
+#line 1283 "lexer.tab.c"
     break;
 
   case 10: /* term: term CLOSURE  */
-#line 156 "lexer.y"
+#line 157 "lexer.y"
                              { (yyval.nval) = closureNFA((yyvsp[-1].nval)); }
-#line 1288 "lexer.tab.c"
+#line 1289 "lexer.tab.c"
     break;
 
   case 11: /* term: LBRACE expr RBRACE  */
-#line 157 "lexer.y"
+#line 158 "lexer.y"
                                    { (yyval.nval) = (yyvsp[-1].nval); }
-#line 1294 "lexer.tab.c"
+#line 1295 "lexer.tab.c"
     break;
 
   case 12: /* term: CHAR  */
-#line 158 "lexer.y"
+#line 159 "lexer.y"
                      {  (yyval.nval) = newNFA((yyvsp[0].cval)); 
                         addSymbol((yyvsp[0].cval));  // 添加到符号表   
                     }
-#line 1302 "lexer.tab.c"
+#line 1303 "lexer.tab.c"
     break;
 
 
-#line 1306 "lexer.tab.c"
+#line 1307 "lexer.tab.c"
 
       default: break;
     }
@@ -1495,7 +1496,7 @@ yyreturnlab:
   return yyresult;
 }
 
-#line 164 "lexer.y"
+#line 165 "lexer.y"
 
 
 // programs section
@@ -2019,6 +2020,8 @@ int initGroupSet(struct DFAState* groupSet,struct DFAState* queueFront){  // 辅
                 isHaveAcceptGroup = true;
                 addDFAEdge(groupSet,queueFront,none);  // 添加边连接分组
                 acceptGroup = queueFront;
+
+                acceptGroup->nfaStateNum = groupNum;  // 作为分组标签
                 groupNum++;
             }
             else{  // 有终态分组
@@ -2027,12 +2030,15 @@ int initGroupSet(struct DFAState* groupSet,struct DFAState* queueFront){  // 辅
                 acceptGroup = queueFront;
             }
             acceptGroup->edgeOut->next = NULL;  // 队尾置空
+            acceptGroup->nfaStateNum = groupNum-1;  // 作为分组标签
         }
         else{  // 非终态
             if(isHaveNonAcceptGroup==false){  // 没有非终态分组
                 isHaveNonAcceptGroup = true;
                 addDFAEdge(groupSet,queueFront,none);  // 添加边连接分组
                 nonAcceptGroup = queueFront;
+
+                nonAcceptGroup->nfaStateNum = groupNum;  // 作为分组标签
                 groupNum++;
             }
             else{  // 有非终态分组
@@ -2041,6 +2047,7 @@ int initGroupSet(struct DFAState* groupSet,struct DFAState* queueFront){  // 辅
                 nonAcceptGroup = queueFront;
             }
             nonAcceptGroup->edgeOut->next = NULL;  // 队尾置空
+            nonAcceptGroup->nfaStateNum = groupNum-1;  // 作为分组标签
         }
         // 出队（把队列头指向下一个）
         queueFront = temp;
@@ -2048,7 +2055,8 @@ int initGroupSet(struct DFAState* groupSet,struct DFAState* queueFront){  // 辅
     return groupNum;
 }
 
-void testGroup(struct DFAState* groupSet,int groupNum){
+void testGroup(struct DFAState* groupSet,int groupNum){  // 辅助函数，测试用
+    // 打印各个分组集合
     printf("testGroup: \n");
     struct DFAEdge* groupPtr = groupSet->edgeOut->nextEdge;  // 第一条边没有用
     for(int i=0;i<groupNum;i++){
@@ -2064,16 +2072,75 @@ void testGroup(struct DFAState* groupSet,int groupNum){
     }
 }
 
+bool isInTheSameGroup(struct DFAState* this,struct DFAState* next){  // 辅助函数
+    // 判断两个状态是否在同一组
+    
+    return true;
+}
+
+int divideGroup(struct DFAState* groupSet,struct DFAState* groupPtr,int nowGroupNum){  // 分组继续划分
+    struct DFAState* thisGroup, *nextGroup = groupPtr;  // 从nextGroup划分出group
+    bool isFirstDivide = true;  // 是否是第一次划分
+    // 一次划分一组
+    while(nextGroup!=NULL){
+        thisGroup = nextGroup;
+        nextGroup = NULL;  // 待分组集合
+        struct DFAState* nextGroupEntry = thisGroup->edgeOut->next;  // 看能不能拿出元素到下一组
+        thisGroup->edgeOut->next = NULL;  // 队尾置空
+        
+        while(nextGroupEntry!=NULL){
+            struct DFAState* temp = nextGroupEntry->edgeOut->next;  // 保存下一个
+            if(isInTheSameGroup(thisGroup,nextGroupEntry)){  // 在同一组
+                nextGroupEntry->edgeOut->next = NULL;  // 队尾置空
+            }
+            else{
+                // 不在同一组，拿出nextGroupEntry到待分组集合
+                if(nextGroup==NULL){  // 第一次
+                    nextGroup = nextGroupEntry;
+                    nowGroupNum++;
+                }
+                else{  // 不是第一次
+                    // 将其连接到对应分组后面
+                    nextGroup->edgeOut->next = nextGroupEntry;
+                    nextGroup = nextGroupEntry;
+                }
+                nextGroup->edgeOut->next = NULL;  // 队尾置空
+                nextGroup->nfaStateNum = nowGroupNum-1;  // 新的分组标签
+            }
+            nextGroupEntry = temp;
+        }
+
+        if(isFirstDivide){  // 第一次划分
+            // 之前已经有一个分组了，不需要新建
+            isFirstDivide = false;
+        }
+        else{  // 不是第一次划分
+            // 将thisGroup连接到groupSet中
+            addDFAEdge(groupSet,thisGroup,none);
+        }
+    }
+
+
+    return nowGroupNum;
+}
+
 struct DFA* minimizeDFA(struct DFA* dfa){
     struct DFA* minDFA = (struct DFA*)malloc(sizeof(struct DFA));
     struct DFAState* groupSet = newDFAState(0);  // 分组集合，不使用第一条边
     // 初始化分组集合，分为终态和非终态
     int groupNum = initGroupSet(groupSet,dfa->start), temp = 0;  // 分组数量
-    testGroup(groupSet,groupNum);
+    //testGroup(groupSet,groupNum);
 
     // 循环构建分组
-
-
+    while(groupNum!=temp){  // 如果前后两次分组没变，说明已经收敛
+        temp = groupNum;
+        struct DFAEdge* groupPtr = groupSet->edgeOut->nextEdge;  // 第一条边没有用
+        for(int i=0;i<temp;i++){  // 试探当前每一个分组是否还能够再细分
+            struct DFAState* queueFront = groupPtr->next;  // 一组的队列头
+            groupNum = divideGroup(groupSet,queueFront,groupNum);  // 组内划分
+        }
+    }
+    testGroup(groupSet,groupNum);
     // 构建分组之间的边
 
     
