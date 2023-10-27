@@ -144,7 +144,7 @@ lines   :       lines expr ';' {    nfa_state_num=0;
                                     printf("----dump DFA----\n");
 
                                     struct DFA* min_dfa = minimizeDFA(dfa);  // 最小化DFA
-                                    dumpMinDFA(min_dfa);  // 输出到dot文件
+                                    //dumpMinDFA(min_dfa);  // 输出到dot文件
                                     printf("----minimize DFA----\n");
 
                                     cleanSymbolTable();  // 清空符号表
@@ -691,8 +691,6 @@ int initGroupSet(struct DFAState* groupSet,struct DFAState* queueFront){  // 辅
                 isHaveAcceptGroup = true;
                 addDFAEdge(groupSet,queueFront,none);  // 添加边连接分组
                 acceptGroup = queueFront;
-
-                acceptGroup->nfaStateNum = groupNum;  // 作为分组标签
                 groupNum++;
             }
             else{  // 有终态分组
@@ -708,8 +706,6 @@ int initGroupSet(struct DFAState* groupSet,struct DFAState* queueFront){  // 辅
                 isHaveNonAcceptGroup = true;
                 addDFAEdge(groupSet,queueFront,none);  // 添加边连接分组
                 nonAcceptGroup = queueFront;
-
-                nonAcceptGroup->nfaStateNum = groupNum;  // 作为分组标签
                 groupNum++;
             }
             else{  // 有非终态分组
@@ -749,6 +745,7 @@ int makeAMove(struct DFAState* s,char c){  // 辅助函数，返回下一个状�
     for(int i=1;i<s->edgeNum;i++){
         if(e->c==c)
             return e->next->nfaStateNum;
+        e = e->nextEdge;
     }
     return -1;
 }
@@ -764,6 +761,7 @@ bool isInTheSameGroup(struct DFAState* this,struct DFAState* next){  // 辅助�
         // 比较两个状态到达的终点是否是同一分组
         int thisGroup = makeAMove(this,c);
         int nextGroup = makeAMove(next,c);
+        //printf("thisGroup%d: %d, nextGroup%d: %d\n",this->id,thisGroup,next->id,nextGroup);
         if(thisGroup!=nextGroup)
             return false;
     }
@@ -772,6 +770,7 @@ bool isInTheSameGroup(struct DFAState* this,struct DFAState* next){  // 辅助�
 
 int divideGroup(struct DFAState* groupSet,struct DFAState* groupPtr,int nowGroupNum){  // 分组继续划分
     struct DFAState* thisGroup, *nextGroup = groupPtr;  // 从nextGroup划分出group
+    struct DFAState* thisEnd, *nextEnd;
     bool isFirstDivide = true;  // 是否是第一次划分
     // 一次划分一组
     while(nextGroup!=NULL){
@@ -782,21 +781,26 @@ int divideGroup(struct DFAState* groupSet,struct DFAState* groupPtr,int nowGroup
         while(nextGroupEntry!=NULL){
             struct DFAState* temp = nextGroupEntry->edgeOut->next;  // 保存下一个
             if(isInTheSameGroup(thisGroup,nextGroupEntry)){  // 在同一组
-                nextGroupEntry->edgeOut->next = NULL;  // 队尾置空
+                // 将其连接到对应分组后面
+                if(thisGroup!=nextGroupEntry)  // 不是第一个
+                    thisEnd->edgeOut->next = nextGroupEntry;
+                thisEnd = nextGroupEntry;
+                thisEnd->edgeOut->next = NULL;  // 队尾置空
             }
             else{
                 // 不在同一组，拿出nextGroupEntry到待分组集合
                 if(nextGroup==NULL){  // 第一次
                     nextGroup = nextGroupEntry;
+                    nextEnd = nextGroup;
                     nowGroupNum++;
                 }
                 else{  // 不是第一次
                     // 将其连接到对应分组后面
-                    nextGroup->edgeOut->next = nextGroupEntry;
-                    nextGroup = nextGroupEntry;
+                    nextEnd->edgeOut->next = nextGroupEntry;
+                    nextEnd = nextGroupEntry;
                 }
-                nextGroup->edgeOut->next = NULL;  // 队尾置空
-                nextGroup->nfaStateNum = nowGroupNum-1;  // 新的分组标签
+                nextEnd->edgeOut->next = NULL;  // 队尾置空
+                nextEnd->nfaStateNum = nowGroupNum-1;  // 新的分组标签
             }
             nextGroupEntry = temp;
         }
@@ -820,6 +824,21 @@ struct DFAState* getTheGroup(struct DFAState* start,int groupNum,int groupLabel)
             return start;
         start = start->edgeOut->next;
     }
+    return NULL;
+}
+
+void printDFA(struct DFA* dfa,int groupNum){
+    struct DFAState* test = dfa->start;
+    for(int i=0;i<groupNum;i++){
+        printf("State: %d",test->id);
+        struct DFAEdge* testEdge = test->edgeOut->nextEdge;
+        for(int j=1;j<test->edgeNum;j++){
+            printf(" -%c-> %d ",testEdge->c,testEdge->next->id);
+            testEdge = testEdge->nextEdge;
+        }
+        printf("\n");
+        test = test->edgeOut->next;
+    }
 }
 
 struct DFA* minimizeDFA(struct DFA* dfa){
@@ -837,6 +856,7 @@ struct DFA* minimizeDFA(struct DFA* dfa){
         for(int i=0;i<temp;i++){  // 试探当前每一个分组是否还能够再细分
             struct DFAState* queueFront = groupPtr->next;  // 一组的队列头
             groupNum = divideGroup(groupSet,queueFront,groupNum);  // 组内划分
+            groupPtr = groupPtr->nextEdge;
         }
     }
     //testGroup(groupSet,groupNum);
@@ -862,6 +882,8 @@ struct DFA* minimizeDFA(struct DFA* dfa){
         // 下一组
         groupPtr = groupPtr->nextEdge;
     }
+    //printDFA(minDFA,groupNum);
+
 
     // 构建新状态之间的边
     groupPtr = groupSet->edgeOut->nextEdge;  // 第一条边没有用
@@ -875,6 +897,8 @@ struct DFA* minimizeDFA(struct DFA* dfa){
             s = s->next;
             // 求出下一个状态的分组标签
             int nextGroupLabel = makeAMove(queueFront,c);
+            if(nextGroupLabel==-1)  // 没有边出去
+                continue;
 
             // 根据分组标签找到对应的分组
             struct DFAState* thisGroup = getTheGroup(minDFA->start,groupNum,queueFront->nfaStateNum);
@@ -912,7 +936,10 @@ struct DFA* minimizeDFA(struct DFA* dfa){
         free(freeEdge);
     }
     free(groupSet);
-    
+
+    // test
+    printDFA(minDFA,groupNum);
+
     return minDFA;
 }
 
@@ -947,6 +974,21 @@ void dumpMinDFA(struct DFA* dfa){  // 输出到dot文件
 
     fprintf(fp,"}\n");
     fclose(fp);
+
+    // 释放DFA内存
+    struct DFAState* freelist;
+    struct DFAEdge* freeEdge;
+    queueFront = dfa->start;
+    while(queueFront!=NULL){  // 释放每个状态
+        freelist = queueFront;
+        queueFront = queueFront->edgeOut->next;
+        for(int j=0;j<freelist->edgeNum;j++){  // 释放每条边
+            freeEdge = freelist->edgeOut;
+            freelist->edgeOut = freelist->edgeOut->nextEdge;
+            free(freeEdge);
+        }
+        free(freelist);
+    }
 }
 
 
