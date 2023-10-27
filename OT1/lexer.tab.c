@@ -74,7 +74,7 @@ YACC file
 可以用C++写！！！
 1. 实现Thompson构造法，从正则表达式转NFA(finish date:2023/10/20)
 2. 实现子集构造法，从NFA转DFA(finish date:2023/10/22)
-3. 实现DFA的最小化(finish date:)
+3. 实现DFA的最小化(finish date:2023/10/27)
 **********************************************/
 #include<stdio.h>
 #include<stdlib.h>
@@ -1249,7 +1249,7 @@ yyreduce:
                                     printf("----dump DFA----\n");
 
                                     struct DFA* min_dfa = minimizeDFA(dfa);  // 最小化DFA
-                                    //dumpMinDFA(min_dfa);  // 输出到dot文件
+                                    dumpMinDFA(min_dfa);  // 输出到dot文件
                                     printf("----minimize DFA----\n");
 
                                     cleanSymbolTable();  // 清空符号表
@@ -2078,8 +2078,10 @@ int makeAMove(struct DFAState* s,char c){  // 辅助函数，返回下一个状�
     struct DFAEdge* e = s->edgeOut->nextEdge;  // 第一条边没有用
     // 没有边出去算死状态
     for(int i=1;i<s->edgeNum;i++){
-        if(e->c==c)
+        if(e->c==c){
+            //printf("makeAMove: %d -%c-> %d\n",s->nfaStateNum,c,e->next->nfaStateNum);
             return e->next->nfaStateNum;
+        }
         e = e->nextEdge;
     }
     return -1;
@@ -2120,6 +2122,7 @@ int divideGroup(struct DFAState* groupSet,struct DFAState* groupPtr,int nowGroup
                 if(thisGroup!=nextGroupEntry)  // 不是第一个
                     thisEnd->edgeOut->next = nextGroupEntry;
                 thisEnd = nextGroupEntry;
+                thisEnd->nfaStateNum = thisGroup->nfaStateNum;  // 分组标签
                 thisEnd->edgeOut->next = NULL;  // 队尾置空
             }
             else{
@@ -2182,7 +2185,7 @@ struct DFA* minimizeDFA(struct DFA* dfa){
     struct DFAState* groupSet = newDFAState(0);  // 分组集合，不使用第一条边
     // 初始化分组集合，分为终态和非终态
     int groupNum = initGroupSet(groupSet,dfa->start), temp = 0;  // 分组数量
-    testGroup(groupSet,groupNum);
+    //testGroup(groupSet,groupNum);
 
     // 循环构建分组
     while(groupNum!=temp){  // 如果前后两次分组没变，说明已经收敛
@@ -2194,7 +2197,7 @@ struct DFA* minimizeDFA(struct DFA* dfa){
             groupPtr = groupPtr->nextEdge;
         }
     }
-    testGroup(groupSet,groupNum);
+    //testGroup(groupSet,groupNum);
 
     // 新建DFA状态，由minDFA连接
     struct DFAEdge* groupPtr = groupSet->edgeOut->nextEdge;  // 第一条边没有用
@@ -2217,7 +2220,7 @@ struct DFA* minimizeDFA(struct DFA* dfa){
         // 下一组
         groupPtr = groupPtr->nextEdge;
     }
-    printDFA(minDFA,groupNum);
+    //printDFA(minDFA,groupNum);
 
 
     // 构建新状态之间的边
@@ -2273,7 +2276,7 @@ struct DFA* minimizeDFA(struct DFA* dfa){
     free(groupSet);
 
     // test
-    printDFA(minDFA,groupNum);
+    //printDFA(minDFA,groupNum);
 
     return minDFA;
 }
