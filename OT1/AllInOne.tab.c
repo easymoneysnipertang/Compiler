@@ -67,7 +67,7 @@
 
 
 /* First part of user prologue.  */
-#line 1 "lexer.y"
+#line 1 "AllInOne.y"
 
 /*********************************************
 YACC file
@@ -178,7 +178,7 @@ struct DFA{
 
 
 
-#line 182 "lexer.tab.c"
+#line 182 "AllInOne.tab.c"
 
 # ifndef YY_CAST
 #  ifdef __cplusplus
@@ -246,12 +246,12 @@ extern int yydebug;
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 112 "lexer.y"
+#line 112 "AllInOne.y"
 
     char cval;  // 字符
     struct NFA* nval;  // 控制NFA
 
-#line 255 "lexer.tab.c"
+#line 255 "AllInOne.tab.c"
 
 };
 typedef union YYSTYPE YYSTYPE;
@@ -1239,7 +1239,7 @@ yyreduce:
   switch (yyn)
     {
   case 2: /* lines: lines expr ';'  */
-#line 138 "lexer.y"
+#line 138 "AllInOne.y"
                                {    nfa_state_num=0; 
                                     dumpNFA((yyvsp[-1].nval));   // 输出到dot文件
                                     printf("----dump NFA----\n");
@@ -1256,61 +1256,61 @@ yyreduce:
                                     FILE_NUM++;
                                     printf("------------------\n"); 
                                 }
-#line 1260 "lexer.tab.c"
+#line 1260 "AllInOne.tab.c"
     break;
 
   case 4: /* lines: lines QUIT  */
-#line 155 "lexer.y"
+#line 155 "AllInOne.y"
                             { exit(0); }
-#line 1266 "lexer.tab.c"
+#line 1266 "AllInOne.tab.c"
     break;
 
   case 6: /* expr: expr OR term_connect  */
-#line 158 "lexer.y"
+#line 158 "AllInOne.y"
                                      { (yyval.nval) = orNFA((yyvsp[-2].nval),(yyvsp[0].nval)); }
-#line 1272 "lexer.tab.c"
+#line 1272 "AllInOne.tab.c"
     break;
 
   case 7: /* expr: term_connect  */
-#line 159 "lexer.y"
+#line 159 "AllInOne.y"
                              { (yyval.nval) = (yyvsp[0].nval); }
-#line 1278 "lexer.tab.c"
+#line 1278 "AllInOne.tab.c"
     break;
 
   case 8: /* term_connect: term term_connect  */
-#line 161 "lexer.y"
+#line 161 "AllInOne.y"
                                           { (yyval.nval) = connectNFA((yyvsp[-1].nval),(yyvsp[0].nval)); }
-#line 1284 "lexer.tab.c"
+#line 1284 "AllInOne.tab.c"
     break;
 
   case 9: /* term_connect: term  */
-#line 162 "lexer.y"
+#line 162 "AllInOne.y"
                      { (yyval.nval) = (yyvsp[0].nval); }
-#line 1290 "lexer.tab.c"
+#line 1290 "AllInOne.tab.c"
     break;
 
   case 10: /* term: term CLOSURE  */
-#line 164 "lexer.y"
+#line 164 "AllInOne.y"
                              { (yyval.nval) = closureNFA((yyvsp[-1].nval)); }
-#line 1296 "lexer.tab.c"
+#line 1296 "AllInOne.tab.c"
     break;
 
   case 11: /* term: LBRACE expr RBRACE  */
-#line 165 "lexer.y"
+#line 165 "AllInOne.y"
                                    { (yyval.nval) = (yyvsp[-1].nval); }
-#line 1302 "lexer.tab.c"
+#line 1302 "AllInOne.tab.c"
     break;
 
   case 12: /* term: CHAR  */
-#line 166 "lexer.y"
+#line 166 "AllInOne.y"
                      {  (yyval.nval) = newNFA((yyvsp[0].cval)); 
                         addSymbol((yyvsp[0].cval));  // 添加到符号表   
                     }
-#line 1310 "lexer.tab.c"
+#line 1310 "AllInOne.tab.c"
     break;
 
 
-#line 1314 "lexer.tab.c"
+#line 1314 "AllInOne.tab.c"
 
       default: break;
     }
@@ -1503,7 +1503,7 @@ yyreturnlab:
   return yyresult;
 }
 
-#line 172 "lexer.y"
+#line 172 "AllInOne.y"
 
 
 // programs section
