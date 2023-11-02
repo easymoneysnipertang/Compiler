@@ -122,6 +122,9 @@ struct DFAState* getTheGroup(struct DFAState* start,int groupNum,int groupLabel)
 struct DFA* minimizeDFA(struct DFA* dfa);
 void dumpMinDFA(struct DFA* dfa);
 
+// 模拟DFA
+void runDFA(struct DFA* dfa);
+
 
 
 // 符号表
@@ -178,7 +181,7 @@ struct DFA{
 
 
 
-#line 182 "AllInOne.tab.c"
+#line 185 "AllInOne.tab.c"
 
 # ifndef YY_CAST
 #  ifdef __cplusplus
@@ -246,12 +249,12 @@ extern int yydebug;
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 112 "AllInOne.y"
+#line 115 "AllInOne.y"
 
     char cval;  // 字符
     struct NFA* nval;  // 控制NFA
 
-#line 255 "AllInOne.tab.c"
+#line 258 "AllInOne.tab.c"
 
 };
 typedef union YYSTYPE YYSTYPE;
@@ -673,8 +676,8 @@ static const yytype_int8 yytranslate[] =
 /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_uint8 yyrline[] =
 {
-       0,   138,   138,   154,   155,   156,   158,   159,   161,   162,
-     164,   165,   166
+       0,   141,   141,   160,   161,   162,   164,   165,   167,   168,
+     170,   171,   172
 };
 #endif
 
@@ -1239,7 +1242,7 @@ yyreduce:
   switch (yyn)
     {
   case 2: /* lines: lines expr ';'  */
-#line 138 "AllInOne.y"
+#line 141 "AllInOne.y"
                                {    nfa_state_num=0; 
                                     dumpNFA((yyvsp[-1].nval));   // 输出到dot文件
                                     printf("----dump NFA----\n");
@@ -1252,65 +1255,68 @@ yyreduce:
                                     dumpMinDFA(min_dfa);  // 输出到dot文件
                                     printf("----minimize DFA----\n");
 
+                                    printf("----run the DFA----\n");
+                                    runDFA(min_dfa);  // 模拟DFA
+
                                     cleanSymbolTable();  // 清空符号表
                                     FILE_NUM++;
                                     printf("------------------\n"); 
                                 }
-#line 1260 "AllInOne.tab.c"
-    break;
-
-  case 4: /* lines: lines QUIT  */
-#line 155 "AllInOne.y"
-                            { exit(0); }
 #line 1266 "AllInOne.tab.c"
     break;
 
-  case 6: /* expr: expr OR term_connect  */
-#line 158 "AllInOne.y"
-                                     { (yyval.nval) = orNFA((yyvsp[-2].nval),(yyvsp[0].nval)); }
+  case 4: /* lines: lines QUIT  */
+#line 161 "AllInOne.y"
+                            { exit(0); }
 #line 1272 "AllInOne.tab.c"
     break;
 
-  case 7: /* expr: term_connect  */
-#line 159 "AllInOne.y"
-                             { (yyval.nval) = (yyvsp[0].nval); }
+  case 6: /* expr: expr OR term_connect  */
+#line 164 "AllInOne.y"
+                                     { (yyval.nval) = orNFA((yyvsp[-2].nval),(yyvsp[0].nval)); }
 #line 1278 "AllInOne.tab.c"
     break;
 
-  case 8: /* term_connect: term term_connect  */
-#line 161 "AllInOne.y"
-                                          { (yyval.nval) = connectNFA((yyvsp[-1].nval),(yyvsp[0].nval)); }
+  case 7: /* expr: term_connect  */
+#line 165 "AllInOne.y"
+                             { (yyval.nval) = (yyvsp[0].nval); }
 #line 1284 "AllInOne.tab.c"
     break;
 
-  case 9: /* term_connect: term  */
-#line 162 "AllInOne.y"
-                     { (yyval.nval) = (yyvsp[0].nval); }
+  case 8: /* term_connect: term term_connect  */
+#line 167 "AllInOne.y"
+                                          { (yyval.nval) = connectNFA((yyvsp[-1].nval),(yyvsp[0].nval)); }
 #line 1290 "AllInOne.tab.c"
     break;
 
-  case 10: /* term: term CLOSURE  */
-#line 164 "AllInOne.y"
-                             { (yyval.nval) = closureNFA((yyvsp[-1].nval)); }
+  case 9: /* term_connect: term  */
+#line 168 "AllInOne.y"
+                     { (yyval.nval) = (yyvsp[0].nval); }
 #line 1296 "AllInOne.tab.c"
     break;
 
-  case 11: /* term: LBRACE expr RBRACE  */
-#line 165 "AllInOne.y"
-                                   { (yyval.nval) = (yyvsp[-1].nval); }
+  case 10: /* term: term CLOSURE  */
+#line 170 "AllInOne.y"
+                             { (yyval.nval) = closureNFA((yyvsp[-1].nval)); }
 #line 1302 "AllInOne.tab.c"
     break;
 
+  case 11: /* term: LBRACE expr RBRACE  */
+#line 171 "AllInOne.y"
+                                   { (yyval.nval) = (yyvsp[-1].nval); }
+#line 1308 "AllInOne.tab.c"
+    break;
+
   case 12: /* term: CHAR  */
-#line 166 "AllInOne.y"
+#line 172 "AllInOne.y"
                      {  (yyval.nval) = newNFA((yyvsp[0].cval)); 
                         addSymbol((yyvsp[0].cval));  // 添加到符号表   
                     }
-#line 1310 "AllInOne.tab.c"
+#line 1316 "AllInOne.tab.c"
     break;
 
 
-#line 1314 "AllInOne.tab.c"
+#line 1320 "AllInOne.tab.c"
 
       default: break;
     }
@@ -1503,7 +1509,7 @@ yyreturnlab:
   return yyresult;
 }
 
-#line 172 "AllInOne.y"
+#line 178 "AllInOne.y"
 
 
 // programs section
@@ -1954,6 +1960,11 @@ struct DFA* NFA2DFA(struct NFA* nfa){  // 子集构造法
                 else{  // 存在
                     //printf("exist state\n");
                     // 释放新状态
+                    for(int i=0;i<DestState->nfaStateNum;i++){
+                        struct State* temp = DestState->nfaState->edgeOut[2].next;
+                        free(DestState->nfaState);
+                        DestState->nfaState = temp;
+                    }
                     free(DestState->edgeOut);
                     free(DestState);
                     // 添加边
@@ -2312,11 +2323,52 @@ void dumpMinDFA(struct DFA* dfa){  // 输出到dot文件
 
     fprintf(fp,"}\n");
     fclose(fp);
+}
+
+
+// 模拟DFA
+void runDFA(struct DFA* dfa){
+    while(true){
+        // 输入字符串
+        char str[30];
+        printf("input: ");
+        scanf("%s",str);
+        if(strcmp(str,"#")==0)  // 退出
+            break;
+        int len = strlen(str);
+
+        // 模拟DFA运行
+        struct DFAState* queueFront = dfa->start;  // 开始状态
+        bool getNext = false;  // 是否模拟成功
+        for(int i=0;i<len;i++){
+            getNext = false;
+            // 取出一个字符
+            char c = str[i];
+            if(c==none)  // 空串
+                continue;
+            // 遍历每个出边
+            struct DFAEdge* edgePtr = queueFront->edgeOut->nextEdge;  // 第一条边没有用
+            for(int j=1;j<queueFront->edgeNum;j++){
+                if(edgePtr->c==c){  // 找到个符合的边
+                    queueFront = edgePtr->next;  // 下一个状态
+                    getNext = true;
+                    break;
+                }
+                edgePtr = edgePtr->nextEdge;
+            }
+            if(!getNext)  // 都没有找到出边，不用再做下一次了
+                break;
+        }
+        if(getNext&&queueFront->isAccept)
+            printf("accept\n");
+        else
+            printf("reject\n");
+    }
 
     // 释放DFA内存
     struct DFAState* freelist;
     struct DFAEdge* freeEdge;
-    queueFront = dfa->start;
+    struct DFAState* queueFront = dfa->start;
     while(queueFront!=NULL){  // 释放每个状态
         freelist = queueFront;
         queueFront = queueFront->edgeOut->next;
@@ -2328,7 +2380,6 @@ void dumpMinDFA(struct DFA* dfa){  // 输出到dot文件
         free(freelist);
     }
 }
-
 
 int main(void)
 {

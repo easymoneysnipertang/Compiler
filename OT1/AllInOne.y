@@ -52,6 +52,9 @@ struct DFAState* getTheGroup(struct DFAState* start,int groupNum,int groupLabel)
 struct DFA* minimizeDFA(struct DFA* dfa);
 void dumpMinDFA(struct DFA* dfa);
 
+// 模拟DFA
+void runDFA(struct DFA* dfa);
+
 
 
 // 符号表
@@ -146,6 +149,9 @@ lines   :       lines expr ';' {    nfa_state_num=0;
                                     struct DFA* min_dfa = minimizeDFA(dfa);  // 最小化DFA
                                     dumpMinDFA(min_dfa);  // 输出到dot文件
                                     printf("----minimize DFA----\n");
+
+                                    printf("----run the DFA----\n");
+                                    runDFA(min_dfa);  // 模拟DFA
 
                                     cleanSymbolTable();  // 清空符号表
                                     FILE_NUM++;
@@ -619,6 +625,11 @@ struct DFA* NFA2DFA(struct NFA* nfa){  // 子集构造法
                 else{  // 存在
                     //printf("exist state\n");
                     // 释放新状态
+                    for(int i=0;i<DestState->nfaStateNum;i++){
+                        struct State* temp = DestState->nfaState->edgeOut[2].next;
+                        free(DestState->nfaState);
+                        DestState->nfaState = temp;
+                    }
                     free(DestState->edgeOut);
                     free(DestState);
                     // 添加边
@@ -977,11 +988,52 @@ void dumpMinDFA(struct DFA* dfa){  // 输出到dot文件
 
     fprintf(fp,"}\n");
     fclose(fp);
+}
+
+
+// 模拟DFA
+void runDFA(struct DFA* dfa){
+    while(true){
+        // 输入字符串
+        char str[30];
+        printf("input: ");
+        scanf("%s",str);
+        if(strcmp(str,"#")==0)  // 退出
+            break;
+        int len = strlen(str);
+
+        // 模拟DFA运行
+        struct DFAState* queueFront = dfa->start;  // 开始状态
+        bool getNext = false;  // 是否模拟成功
+        for(int i=0;i<len;i++){
+            getNext = false;
+            // 取出一个字符
+            char c = str[i];
+            if(c==none)  // 空串
+                continue;
+            // 遍历每个出边
+            struct DFAEdge* edgePtr = queueFront->edgeOut->nextEdge;  // 第一条边没有用
+            for(int j=1;j<queueFront->edgeNum;j++){
+                if(edgePtr->c==c){  // 找到个符合的边
+                    queueFront = edgePtr->next;  // 下一个状态
+                    getNext = true;
+                    break;
+                }
+                edgePtr = edgePtr->nextEdge;
+            }
+            if(!getNext)  // 都没有找到出边，不用再做下一次了
+                break;
+        }
+        if(getNext&&queueFront->isAccept)
+            printf("accept\n");
+        else
+            printf("reject\n");
+    }
 
     // 释放DFA内存
     struct DFAState* freelist;
     struct DFAEdge* freeEdge;
-    queueFront = dfa->start;
+    struct DFAState* queueFront = dfa->start;
     while(queueFront!=NULL){  // 释放每个状态
         freelist = queueFront;
         queueFront = queueFront->edgeOut->next;
@@ -993,7 +1045,6 @@ void dumpMinDFA(struct DFA* dfa){  // 输出到dot文件
         free(freelist);
     }
 }
-
 
 int main(void)
 {
